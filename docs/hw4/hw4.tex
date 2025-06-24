@@ -1,0 +1,198 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=2.7cm]{geometry}
+\usepackage{amsmath,amsthm,amssymb,stmaryrd}
+\usepackage{mathrsfs}
+\usepackage{tikz-cd} % nice commutative diagrams
+\usepackage{enumitem} % for compact itemize/enumerate
+\usepackage{hyperref}
+
+% ------------------------------------------------------------------
+% Theorem environments
+% ------------------------------------------------------------------
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+% ------------------------------------------------------------------
+% TikZ styles
+% ------------------------------------------------------------------
+\tikzset{
+  >=stealth,  % nicer arrows
+  every diagram/.style={baseline=(current bounding box.center)}
+}
+
+% ------------------------------------------------------------------
+% Convenience macros
+% ------------------------------------------------------------------
+\newcommand{\cat}[1]{\mathbf{#1}}      % categories in boldface
+\newcommand{\Set}{\cat{Set}}
+\newcommand{\Graph}{\cat{Graph}}       % the usual category of graphs
+\newcommand{\Hom}{\operatorname{Hom}}
+\newcommand{\id}{\mathrm{id}}
+
+\title{Homework IV\\[0.4em]
+  {\large Typed graphs over a fixed type graph form a category}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\vspace{-1.5em}
+
+\section{Prerequisites \& notation}
+
+Throughout the exercise we work with \emph{directed graphs}.
+A graph is a quadruple $G=(E,V,s,t)$ where
+\[
+  s,t : E \longrightarrow V
+\]
+are the source and target maps.
+A \emph{graph morphism} $f\colon G_1\to G_2$ is a pair
+$f=(f_E,f_V)$ of functions $f_E\colon E_1\to E_2$,
+$f_V\colon V_1\to V_2$
+such that $s_2\circ f_E = f_V\circ s_1$ and
+$t_2\circ f_E = f_V\circ t_1$.
+
+\smallskip
+Fix once and for all a \emph{type graph}
+\[
+  \mathsf{TG} = (E_{\mathsf{TG}},V_{\mathsf{TG}},s_{\mathsf{TG}},t_{\mathsf{TG}}).
+\]
+All typing data in what follows refer to this graph.
+
+\section{Typed graphs and their morphisms}
+
+\begin{definition}[Typed graph]\label{def:typed-graph}
+A \emph{graph typed over $\mathsf{TG}$} (short: a \emph{typed graph})
+is a pair $(G,\mathsf{type})$ where
+\[
+  \mathsf{type} \;=\; (\mathsf{type}_E,\mathsf{type}_V)\colon
+  G\to\mathsf{TG}
+\]
+is a graph morphism.  Explicitly,
+\[
+  s_{\mathsf{TG}}\circ \mathsf{type}_E
+  \;=\;
+  \mathsf{type}_V\circ s,
+  \qquad
+  t_{\mathsf{TG}}\circ \mathsf{type}_E
+  \;=\;
+  \mathsf{type}_V\circ t.
+\]
+\end{definition}
+
+\begin{definition}[Morphisms of typed graphs]\label{def:typed-graph-morphism}
+Given typed graphs $(G_1,\mathsf{type}_1)$ and $(G_2,\mathsf{type}_2)$,
+a \emph{typed-graph morphism}
+\[
+  f=(f_E,f_V)\colon
+  (G_1,\mathsf{type}_1) \longrightarrow
+  (G_2,\mathsf{type}_2)
+\]
+is a graph morphism $G_1\to G_2$ that \emph{preserves type}, i.e.
+\[
+  \mathsf{type}_{1,E} = \mathsf{type}_{2,E}\circ f_E,
+  \qquad
+  \mathsf{type}_{1,V} = \mathsf{type}_{2,V}\circ f_V.
+\]
+
+\begin{center}
+\begin{tikzcd}[column sep=3.3em,row sep=3.3em]
+  G_1 \ar[d,"\mathsf{type}_1"'] \ar[r,"f"] & G_2 \ar[d,"\mathsf{type}_2"]\\
+  \mathsf{TG} \ar[r,equal] & \mathsf{TG}
+\end{tikzcd}
+\end{center}
+\end{definition}
+
+\section{Main result}
+
+\begin{theorem}\label{thm:is-category}
+The class of typed graphs over~$\mathsf{TG}$,
+together with typed-graph morphisms, forms a category,
+denoted $\Graph_{/\mathsf{TG}}$.
+\end{theorem}
+
+\begin{proof}
+We must supply composition of morphisms and verify the four
+category axioms.
+
+\paragraph{\underline{(1) Composition is well-defined}}
+Let
+\[
+  (G_1,\mathsf{type}_1) \xrightarrow{f}
+  (G_2,\mathsf{type}_2) \xrightarrow{g}
+  (G_3,\mathsf{type}_3)
+\]
+be typed-graph morphisms.
+The ordinary composition $g\circ f$ is
+a graph morphism $G_1\to G_3$.
+Type preservation is inherited:
+\[
+  \mathsf{type}_{3,E}\circ(g_E\!\circ f_E)
+  \;=\; (\mathsf{type}_{3,E}\circ g_E)\circ f_E
+  \;=\; \mathsf{type}_{2,E}\circ f_E
+  \;=\; \mathsf{type}_{1,E},
+\]
+and similarly on vertices. Hence $g\circ f$
+is again a typed-graph morphism.
+Closure holds.
+
+\paragraph{\underline{(2) Associativity}}
+Composition is defined using the underlying category
+$\Graph$, which is associative; therefore
+$(h\circ g)\circ f = h\circ(g\circ f)$ as typed-graph morphisms.
+
+\paragraph{\underline{(3) Identities}}
+For every object $(G,\mathsf{type})$ the identity graph morphism
+$\id_G=(\id_E,\id_V)$ satisfies
+$\mathsf{type}_E = \mathsf{type}_E\circ\id_E$ and
+$\mathsf{type}_V = \mathsf{type}_V\circ\id_V$,
+hence qualifies as a typed-graph morphism
+$\id_{(G,\mathsf{type})}$.
+
+\paragraph{\underline{(4) Identity laws}}
+Because identities and composition come from $\Graph$
+they obey $f\circ\id = f = \id\circ f$.
+
+All four axioms are satisfied, so $\Graph_{/\mathsf{TG}}$
+is indeed a category.
+\end{proof}
+
+\section{Two corollaries (optional, but nice to mention)}
+
+\begin{corollary}[Labelled graphs]\label{cor:labelled}
+If $\mathsf{TG}$ is a ``star'' whose vertices/loops
+encode labels, then typed graphs over $\mathsf{TG}$ coincide
+with ordinary labelled graphs.
+\end{corollary}
+
+\begin{corollary}[Forgetful functor]\label{cor:forgetful}
+There is a faithful functor
+\[
+  U \colon \Graph_{/\mathsf{TG}} \longrightarrow \Graph,
+  \qquad
+  (G,\mathsf{type})\mapsto G,\;
+  f\mapsto f,
+\]
+which simply forgets the typing.  In many contexts $U$ admits
+a left adjoint (free typing) and, under mild finiteness conditions,
+also a right adjoint (constant typing).
+\end{corollary}
+
+\medskip
+\noindent\emph{Remark.}
+The category constructed above is the \emph{slice category}
+$\Graph/\mathsf{TG}$; this homework is a pleasant concrete case
+study of that general construction.
+
+\bigskip
+\begin{center}
+\textsc{End of Solution}
+\end{center}
+\end{document}
