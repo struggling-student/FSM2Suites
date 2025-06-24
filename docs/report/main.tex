@@ -1,0 +1,80 @@
+\documentclass[nonacm,sigplan]{acmart}
+\settopmatter{printacmref=false}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{multicol}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{siunitx}
+\usepackage{listings}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=red,
+  filecolor=magenta,
+  urlcolor=cyan
+}
+\lstset{basicstyle=\ttfamily\footnotesize, breaklines=true}
+\definecolor{codebg}{gray}{0.97}
+\definecolor{codekw}{rgb}{0.10,0.35,0.70}
+\definecolor{codestr}{rgb}{0.60,0.00,0.00}
+\definecolor{codecom}{rgb}{0.30,0.50,0.30}
+
+\lstdefinestyle{pystyle}{
+  language     = Python,
+  basicstyle   = \ttfamily\footnotesize,
+  keywordstyle = \color{codekw}\bfseries,
+  stringstyle  = \color{codestr},
+  commentstyle = \color{codecom}\itshape,
+  showstringspaces = false,
+  breaklines   = true,
+  frame        = single,
+  framerule    = 0pt,
+  rulecolor    = \color{black!15},
+}
+
+\begin{document}
+\title[]{MultiModalMan: An Interactive Hangman Game}
+
+\author{Andrea Tarricone}
+\email{tarricone.1888181@studenti.uniroma1.it}
+\affiliation{%
+  \institution{University "La Sapienza"}
+  \city{Rome}
+  \state{Lazio}
+  \country{Italy}
+}
+
+\author{Lucian Dorin Crainic}
+\email{crainic.1938430@studenti.uniroma1.it}
+\affiliation{
+  \institution{University "La Sapienza"}
+  \city{Rome}
+  \state{Lazio}
+  \country{Italy}
+}
+
+\begin{abstract}
+\textbf{MultiModalMan} is a reimagining of the classic \textit{hangman game} that lets players guess letters and control the interface by speaking or using hand gestures as well as by typing. The system is built in \textit{Python} around three modules: a state manager that synchronises all inputs, an \textbf{AI agent} for \textit{natural language processing}, and a \textit{Computer Vision pipeline} for \textit{real time gesture recognition}. Users can switch freely between modalities during play, making the game accessible and engaging for a wide audience. The application is implemented using the \textit{Flet} framework, which provides a responsive web interface that runs in any modern browser. This paper describes the architecture, design patterns, and implementation details of the system, highlighting its innovative use of multimodal interaction to enhance user experience.
+\end{abstract}
+
+
+% \begin{teaserfigure}
+%   \includegraphics[width=\textwidth]{./images/architecture_diagram.png}
+%   \caption{High level overview of the MultiModalMan game system showing the flow from user inputs through processing layers to the core application.}
+% \end{teaserfigure}
+
+\maketitle
+\pagestyle{plain}
+
+\input{src/01.tex}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+\end{document}
