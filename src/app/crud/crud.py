@@ -4,7 +4,7 @@ from sqlalchemy import and_, or_, func, extract
 from datetime import datetime, timedelta
 import uuid
 
-from app.models.models import User, Trip, Activity, Location, Feedback, ActivityType
+from app.models.models import User, Trip, Activity, Location, Feedback, ActivityType, TripStatus
 from app.schemas.schemas import (
     UserCreate, UserUpdate, TripCreate, TripUpdate, 
     ActivityCreate, ActivityUpdate, LocationCreate, 
@@ -235,6 +235,10 @@ class CRUDTrip:
         return db_obj
     
     def update(self, db: Session, db_obj: Trip, obj_in: TripUpdate) -> Trip:
+        # Check if trip is editable (only draft trips can be updated)
+        if db_obj.status != TripStatus.DRAFT:
+            raise ValueError("Only draft trips can be updated")
+            
         update_data = obj_in.dict(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)

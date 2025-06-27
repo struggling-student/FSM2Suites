@@ -28,6 +28,11 @@ class ActivityType(enum.Enum):
     TRANSPORT = "transport"
     OVERNIGHT_STAY = "overnight_stay"
 
+class TripStatus(enum.Enum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    CANCELED = "canceled"
+
 class User(Base):
     __tablename__ = "users"
     
@@ -94,11 +99,17 @@ class Trip(Base):
     end_date = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=func.now())
     is_active = Column(Boolean, default=True)
+    status = Column(SQLEnum(TripStatus), nullable=False, default=TripStatus.DRAFT)
     
     # Relationships
     organizer = relationship("User", back_populates="organized_trips", foreign_keys=[organizer_id])
     participants = relationship("User", secondary=trip_participants, back_populates="participated_trips")
     activities = relationship("Activity", back_populates="trip", cascade="all, delete-orphan")
+    
+    @property
+    def is_editable(self) -> bool:
+        """Check if trip can be edited (only draft trips are editable)"""
+        return self.status == TripStatus.DRAFT
     
     @property
     def total_price(self) -> float:
