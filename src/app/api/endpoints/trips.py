@@ -9,7 +9,7 @@ from app.schemas.schemas import (
     Trip, TripCreate, TripUpdate, TripListResponse, 
     TripSearchFilters, Message, User
 )
-from app.models.models import User as UserModel, Trip as TripModel
+from app.models.models import User as UserModel, Trip as TripModel, TripStatus
 from app.api.endpoints.users import get_current_user
 
 router = APIRouter()
@@ -204,3 +204,70 @@ def get_my_joined_trips(
     """Get trips joined by current user"""
     trips = trip_crud.get_by_participant(db, user_id=current_user.id, skip=skip, limit=limit)
     return trips
+
+@router.post("/{trip_id}/publish", response_model=Trip)
+def publish_trip(
+    trip_id: str,
+    current_user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Publish a draft trip (makes it read-only)"""
+    trip = trip_crud.get(db, id=trip_id)
+    if not trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Trip not found"
+        )
+    
+    if trip.organizer_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the organizer can publish this trip"
+        )
+    
+    if trip.status != TripStatus.DRAFT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only draft trips can be published"
+        )
+    
+    # Update trip status to published
+    trip_update = TripUpdate()
+    trip.status = TripStatus.PUBLISHED
+    db.commit()
+    db.refresh(trip)
+    
+    return trip
+
+@router.post("/{trip_id}/cancel", response_model=Trip)
+def cancel_trip(
+    trip_id: str,
+    current_user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Cancel a published trip"""
+    trip = trip_crud.get(db, id=trip_id)
+    if not trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Trip not found"
+        )
+    
+    if trip.organizer_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the organizer can cancel this trip"
+        )
+    
+    if trip.status != TripStatus.PUBLISHED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only published trips can be canceled"
+        )
+    
+    # Update trip status to canceled
+    trip.status = TripStatus.CANCELED
+    db.commit()
+    db.refresh(trip)
+    
+    return trip

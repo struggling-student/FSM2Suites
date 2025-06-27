@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.crud.crud import activity_crud, trip_crud, feedback_crud
 from app.schemas.schemas import Activity, ActivityCreate, ActivityUpdate, Message, Feedback, FeedbackCreate, FeedbackUpdate, ActivityFeedbackCreate
-from app.models.models import User as UserModel, Feedback as FeedbackModel
+from app.models.models import User as UserModel, Feedback as FeedbackModel, TripStatus
 from app.api.endpoints.users import get_current_user
 
 router = APIRouter()
@@ -47,6 +47,13 @@ def create_activity(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only the trip organizer can add activities"
+        )
+    
+    # Check if trip is in draft status (editable)
+    if trip.status != TripStatus.DRAFT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Activities can only be added to draft trips"
         )
     
     db_activity = activity_crud.create(db, obj_in=activity, trip_id=trip_id)

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, validator
 from typing import List, Optional, Union
 from datetime import datetime
-from app.models.models import ActivityType
+from app.models.models import ActivityType, TripStatus
 
 # Location schemas
 class LocationBase(BaseModel):
@@ -133,6 +133,8 @@ class Trip(TripBase):
     regions: List[str]
     created_at: datetime
     is_active: bool
+    status: TripStatus
+    is_editable: bool
     
     class Config:
         from_attributes = True
