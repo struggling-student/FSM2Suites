@@ -1,0 +1,48 @@
+*** Settings ***
+Library         Keyword.py
+Test Setup      Setup Test Environment
+
+
+*** Variables ***
+${TRIP_NAME}           Test Trip
+${USER_TYPE}           organizer
+
+
+*** Machine ***
+${TRIP_NAME}    any of    Test Trip    Business Trip
+${USER_TYPE}    any of    organizer    participant
+
+
+Init
+  [Actions]
+    create trip          ==>  Draft
+
+Draft
+  assert trip state is      Draft
+  [Actions]
+    publish trip          ==>  Published
+
+Published
+  assert trip state is      Published
+  [Actions]
+    cancel trip           ==>  Canceled
+
+Canceled
+  assert trip state is      Canceled
+
+
+*** Keywords ***
+create trip
+  [Documentation]    Create a new trip in draft state
+  create new trip via api
+  verify trip created
+
+publish trip
+  [Documentation]    Publish the trip making it read-only
+  publish trip api call
+  verify trip status    Published
+
+cancel trip
+  [Documentation]    Cancel a published trip
+  cancel trip api call
+  verify trip status    Canceled
