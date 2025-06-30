@@ -1,8 +1,6 @@
 from __future__ import print_function
 
 import os
-import re
-import subprocess
 import sys
 from .parsing import RoboMachineParsingException, parse
 
@@ -38,15 +36,6 @@ Use test generation algorithm:
 allpairs-random = generate tests randomly, use allpairs algorithm for parameter value selection
 dfs = depth first search  (default)
 random = generate tests randomly''')
-parser.add_argument('--do-not-execute', action='store_true', default=False,
-                    help='Do not execute generated tests with pybot command')
-parser.add_argument('--generate-dot-graph', '-D',
-                    type=str, default='none', choices=['none', 'png', 'svg'],
-                    help='''\
-Generates a directional graph visualizing your test model. Select file format:
-none - Do not generate a file (default)
-png  - bitmap
-svg  - vector''')
 
 
 def main():
@@ -68,55 +57,12 @@ def main():
     # File names:
     output_base_name = os.path.splitext(args.output or args.input)[0]
     output_test_file = output_base_name + '.robot'
-    output_dot_file = output_base_name + '.dot'
 
     # Find unique actions:
     for state in machine.states:
         for action in state._actions:
             action._parent_state = state
             all_actions.add(action)
-
-    # DOT Graph:
-    if args.generate_dot_graph != 'none':
-        # Generate graph in dot format:
-        dot_graph = 'digraph TestModel {\n'
-        #
-        # Nodes:
-        for state in machine.states:
-            dot_graph += '  {:s}  [label=\"{:s}\"];\n'.format(state.name.replace(' ', '_'), state.name)
-        #
-        # Transitions:
-        for action in all_actions:
-            state = action._parent_state
-            action_name = action.name if action.name != '' else '[tau]'
-            dot_state_name = state.name.replace(' ', '_')
-            dot_next_state_name = action.next_state.name.replace(' ', '_')
-            dot_action_name = re.sub(r'\s\s+', '  ', action_name)
-
-            dot_graph += '  {:s}  -> {:s}  [label="{:s}"];\n'.format(
-                dot_state_name, dot_next_state_name, dot_action_name)
-        dot_graph += '}\n'
-        #
-        # Write to STDOUT:
-        print('-' * 78)
-        print('Dot graph')
-        print('---------')
-        print(dot_graph)
-        print('-' * 78)
-        #
-        # Write to file:
-        with open(output_dot_file, 'w') as out:
-            out.write(dot_graph)
-        try:
-            retcode = subprocess.call(['dot', '-O', '-T' + args.generate_dot_graph, output_dot_file])
-        except OSError:
-            retcode = -1
-        if retcode == 0:
-            print('Generated dot files: {:s}, {:s}.{:s}'.format(
-                output_dot_file, output_dot_file, args.generate_dot_graph))
-        else:
-            print('ERROR: Something went wrong during the dot file generation!\n' +
-                  '       Maybe you haven\'t yet installed the dot tool?')
 
     # Generate tests:
     with open(output_test_file, 'w') as out:
@@ -167,12 +113,6 @@ def main():
             action_name = action.name if action.name != '' else '[tau]'
             print('    {:s} ({:s} -> {:s})'.format(action_name, action._parent_state.name, action.next_state.name))
     print('-' * 78)
-
-    # Run tests:
-    if not args.do_not_execute:
-        print('\nRunning generated tests with robot:')
-        retcode = subprocess.call(['robot', output_test_file])
-        sys.exit(retcode)
 
 
 def _select_strategy(strategy):
