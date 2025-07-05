@@ -1,0 +1,58 @@
+*** Settings ***
+Library         ShoppingKeywordLibrary.py
+Test Setup      Setup Shopping Environment
+
+
+*** Variables ***
+${VALID_EMAIL}         test@example.com
+${VALID_PASSWORD}      password123
+${INVALID_EMAIL}       invalid@test.com
+${INVALID_PASSWORD}    wrongpassword
+
+
+*** Machine ***
+${EMAIL}       any of    ${VALID_EMAIL}      ${INVALID_EMAIL}
+${PASSWORD}    any of    ${VALID_PASSWORD}   ${INVALID_PASSWORD}
+${PAYMENT}     any of    success    failure
+
+
+Login
+  [Actions]
+    login with credentials    ==>  Browsing      when  ${EMAIL} == ${VALID_EMAIL}  and  ${PASSWORD} == ${VALID_PASSWORD}
+    login with credentials    ==>  LoginFailed   otherwise
+
+LoginFailed
+  [Actions]
+    try login again          ==>  Login
+    exit application         ==>  SessionEnded
+
+Browsing
+  [Actions]
+    add product to cart       ==>  CartEditing
+    logout                    ==>  SessionEnded
+
+CartEditing
+  [Actions]
+    proceed to checkout       ==>  Checkout
+    logout                    ==>  SessionEnded
+
+Checkout
+  [Actions]
+    process payment           ==>  OrderConfirmed  when  ${PAYMENT} == success
+    process payment           ==>  PaymentFailed   when  ${PAYMENT} == failure
+    cancel checkout           ==>  CartEditing
+    logout                    ==>  SessionEnded
+
+OrderConfirmed
+  [Actions]
+    logout                    ==>  SessionEnded
+
+PaymentFailed
+  [Actions]
+    retry payment             ==>  Checkout
+    cancel order              ==>  CartEditing
+    logout                    ==>  SessionEnded
+
+SessionEnded
+  [Actions]
+    return to login           ==>  Login
