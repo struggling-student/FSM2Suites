@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer } from 'react';
+import ApiService from '../services/api';
 
 // FSM States
 export const APP_STATES = {
@@ -171,10 +172,48 @@ export function AppProvider({ children }) {
     loginSuccess: (user) => dispatch({ type: ACTIONS.LOGIN_SUCCESS, payload: user }),
     logout: () => dispatch({ type: ACTIONS.LOGOUT }),
     setProducts: (products) => dispatch({ type: ACTIONS.SET_PRODUCTS, payload: products }),
-    addToCart: (product) => dispatch({ type: ACTIONS.ADD_TO_CART, payload: product }),
-    removeFromCart: (productId) => dispatch({ type: ACTIONS.REMOVE_FROM_CART, payload: productId }),
-    updateCartItem: (item) => dispatch({ type: ACTIONS.UPDATE_CART_ITEM, payload: item }),
-    startCheckout: () => dispatch({ type: ACTIONS.START_CHECKOUT }),
+    addToCart: async (product) => {
+      try {
+        // Call backend API first
+        await ApiService.addToCart(product.id, product.quantity || 1);
+        // Then update local state
+        dispatch({ type: ACTIONS.ADD_TO_CART, payload: product });
+      } catch (error) {
+        console.error('Failed to add to cart:', error);
+        dispatch({ type: ACTIONS.SET_ERROR, payload: 'Failed to add item to cart' });
+      }
+    },
+    removeFromCart: async (productId) => {
+      try {
+        // Call backend API first
+        await ApiService.removeFromCart(productId);
+        // Then update local state
+        dispatch({ type: ACTIONS.REMOVE_FROM_CART, payload: productId });
+      } catch (error) {
+        console.error('Failed to remove from cart:', error);
+        dispatch({ type: ACTIONS.SET_ERROR, payload: 'Failed to remove item from cart' });
+      }
+    },
+    updateCartItem: async (item) => {
+      try {
+        // Call backend API first
+        await ApiService.updateCart(item.id, item.quantity);
+        // Then update local state
+        dispatch({ type: ACTIONS.UPDATE_CART_ITEM, payload: item });
+      } catch (error) {
+        console.error('Failed to update cart:', error);
+        dispatch({ type: ACTIONS.SET_ERROR, payload: 'Failed to update cart' });
+      }
+    },
+    startCheckout: async () => {
+      try {
+        await ApiService.startCheckout();
+        dispatch({ type: ACTIONS.START_CHECKOUT });
+      } catch (error) {
+        console.error('Failed to start checkout:', error);
+        dispatch({ type: ACTIONS.SET_ERROR, payload: 'Failed to start checkout' });
+      }
+    },
     paymentSuccess: (orderSummary) => dispatch({ type: ACTIONS.PAYMENT_SUCCESS, payload: orderSummary }),
     paymentFailed: () => dispatch({ type: ACTIONS.PAYMENT_FAILED }),
     cancelCheckout: () => dispatch({ type: ACTIONS.CANCEL_CHECKOUT }),
