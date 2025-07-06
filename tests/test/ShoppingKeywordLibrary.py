@@ -385,32 +385,42 @@ class ShoppingKeywordLibrary:
     def add_product_to_cart(self, product_id, quantity):
         """Add a product to cart."""
         try:
-            # Find and click the add to cart button for the specific product
-            add_btn = self.driver.find_element(By.CSS_SELECTOR, f"[data-testid='add-to-cart-{product_id}']")
+            # Wait for the add to cart button for the specific product
+            add_btn = self.wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, f"[data-testid='add-to-cart-{product_id}']"))
+            )
             add_btn.click()
             
-            # Wait for the action to complete
+            # Wait a moment for the cart to update
             time.sleep(1)
             
-            # Update state
-            if product_id in [1, 2, 3, 4, 5, 6] and quantity > 0:
-                self.current_state = "CartEditing"
-                logger.info(f"Added product {product_id} to cart")
-            else:
-                logger.info(f"Failed to add product {product_id} to cart")
+            # Update state - we stay on catalog page after adding items
+            self.current_state = "Browsing"
+            logger.info(f"Added product {product_id} to cart (quantity: {quantity})")
                 
         except Exception as e:
-            logger.error(f"Add to cart action failed: {e}")
-            # Stay in current state if action fails
+            raise AssertionError(f"Add to cart action failed for product {product_id}: {e}")
     
     def view_cart(self):
         """Navigate to cart view."""
         try:
-            cart_btn = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='view-cart-btn']")
+            # Check if we're already on the cart page
+            cart_title = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid='cart-title']")
+            if cart_title:
+                logger.info("Already on cart page")
+                self.current_state = "CartEditing"
+                return
+            
+            # Look for view cart button (should be on catalog page)
+            cart_btn = self.wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='view-cart-btn']"))
+            )
             cart_btn.click()
             
-            # Wait for navigation
-            time.sleep(1)
+            # Wait for navigation to cart page
+            self.wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='cart-title']"))
+            )
             
             # Check if cart has items
             cart_items = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid^='cart-item-']")
@@ -419,10 +429,10 @@ class ShoppingKeywordLibrary:
                 logger.info("Navigated to cart with items")
             else:
                 self.current_state = "Browsing"
-                logger.info("Cart is empty, staying in browsing")
+                logger.info("Cart is empty")
                 
         except Exception as e:
-            logger.error(f"View cart action failed: {e}")
+            raise AssertionError(f"View cart action failed: {e}")
     
     def continue_shopping(self):
         """Continue shopping from cart."""
@@ -487,15 +497,21 @@ class ShoppingKeywordLibrary:
     def proceed_to_checkout(self):
         """Proceed to checkout from cart."""
         try:
-            checkout_btn = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='checkout-btn']")
+            checkout_btn = self.wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='checkout-btn']"))
+            )
             checkout_btn.click()
             
-            time.sleep(1)
+            # Wait for checkout page to load
+            self.wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='checkout-title']"))
+            )
+            
             self.current_state = "Checkout"
             logger.info("Proceeded to checkout")
             
         except Exception as e:
-            logger.error(f"Proceed to checkout action failed: {e}")
+            raise AssertionError(f"Proceed to checkout action failed: {e}")
     
     def process_payment(self, payment_type):
         """Process payment (success or failure)."""
@@ -505,23 +521,35 @@ class ShoppingKeywordLibrary:
             
             # Choose payment button based on type
             if payment_type == "success":
-                pay_btn = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='pay-success-btn']")
+                pay_btn = self.wait.until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='pay-success-btn']"))
+                )
                 pay_btn.click()
                 
-                time.sleep(2)  # Wait for payment processing
+                # Wait for order confirmation page to load
+                self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='success-message']"))
+                )
+                
                 self.current_state = "OrderConfirmed"
                 logger.info("Payment processed successfully")
                 
             elif payment_type == "failure":
-                pay_btn = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='pay-fail-btn']")
+                pay_btn = self.wait.until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='pay-fail-btn']"))
+                )
                 pay_btn.click()
                 
-                time.sleep(2)  # Wait for payment processing
+                # Wait for payment failure page to load
+                self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='failure-message']"))
+                )
+                
                 self.current_state = "PaymentFailed"
                 logger.info("Payment failed")
                 
         except Exception as e:
-            logger.error(f"Process payment action failed: {e}")
+            raise AssertionError(f"Process payment action failed: {e}")
     
     def cancel_checkout(self):
         """Cancel checkout process."""
@@ -610,27 +638,32 @@ class ShoppingKeywordLibrary:
     def _fill_shipping_info(self):
         """Fill in shipping information for checkout."""
         try:
-            address_input = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='address-input']")
-            city_input = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='city-input']")
-            zipcode_input = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='zipcode-input']")
-            country_input = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='country-input']")
-            
+            # Wait for and fill address
+            address_input = self.wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='address-input']"))
+            )
             address_input.clear()
             address_input.send_keys("123 Test Street")
             
+            # Fill city
+            city_input = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='city-input']")
             city_input.clear()
             city_input.send_keys("Test City")
             
+            # Fill zipcode
+            zipcode_input = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='zipcode-input']")
             zipcode_input.clear()
             zipcode_input.send_keys("12345")
             
+            # Fill country
+            country_input = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='country-input']")
             country_input.clear()
             country_input.send_keys("Test Country")
             
             logger.info("Shipping information filled")
             
         except Exception as e:
-            logger.error(f"Failed to fill shipping info: {e}")
+            raise AssertionError(f"Failed to fill shipping info: {e}")
     
     # =============================================================================
     # CONDITIONS FOR MACHINE
