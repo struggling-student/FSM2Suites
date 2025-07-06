@@ -110,10 +110,11 @@ class State(object):
 
 class Action(object):
 
-    def __init__(self, name, next_state, condition=None):
+    def __init__(self, name, next_state, condition=None, args=None):
         self.name = name
         self._next_state_name = next_state
         self.condition = condition
+        self.args = args or []
         self._machine = None
 
     def set_machine(self, machine):
@@ -135,8 +136,28 @@ class Action(object):
 
     def write_to(self, output):
         if self.name:
-            output.write('  {:s}\n'.format(self.name))
+            if self.args:
+                # Resolve variables in arguments and write action with resolved arguments
+                resolved_args = []
+                for arg in self.args:
+                    if self._machine and Variable.PATTERN.search(arg):
+                        # Resolve variables in this argument
+                        resolved_arg = Variable.PATTERN.sub(self._resolve_variable, arg)
+                        resolved_args.append(resolved_arg)
+                    else:
+                        resolved_args.append(arg)
+                args_str = '  '.join(resolved_args)
+                output.write('  {:s}  {:s}\n'.format(self.name, args_str))
+            else:
+                output.write('  {:s}\n'.format(self.name))
         self.next_state.write_to(output)
+
+    def _resolve_variable(self, var_match):
+        """Helper method to resolve variable references in arguments"""
+        var = self._machine.find_variable_by_name(var_match.group(0))
+        if not var:
+            return var_match.group(0)
+        return var.current_value
 
 
 class Variable(object):
