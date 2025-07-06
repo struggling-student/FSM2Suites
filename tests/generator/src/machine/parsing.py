@@ -129,10 +129,17 @@ def parse_condition(cond):
 condition.leaveWhitespace()
 condition.setParseAction(parse_condition)
 condition = Optional(condition).setResultsName('condition')
+
+# Add support for args
+args_keyword = splitter + Literal('args') + splitter
+arguments = ZeroOrMore(variable_value + Optional(splitter))
+arguments.setParseAction(lambda t: [t[i] for i in range(len(t)) if i % 2 == 0])
+args_section = Optional(args_keyword + arguments).setResultsName('args')
+
 action = White(min=4) + Optional(robo_step + White(min=2)) + \
-         '==>' + White(min=2) + state_name + condition + end_of_line
+         '==>' + White(min=2) + state_name + condition + args_section + end_of_line
 action.leaveWhitespace()
-action.setParseAction(lambda t: [Action(t.robo_step.rstrip(), t.state_name, t.condition)])
+action.setParseAction(lambda t: [Action(t.robo_step.rstrip(), t.state_name, t.condition, getattr(t, 'args', None))])
 
 actions = action_header + end_of_line + OneOrMore(action).setResultsName('actions')
 actions = Optional(actions)
@@ -304,26 +311,42 @@ def parse_simple(content):
             # Action definition (starts with 4+ spaces and contains ==>)
             elif line.startswith('    ') and '==>' in line:
                 if current_state:
-                    # Parse action: "    action ==> Target when condition"
+                    # Parse action: "    action ==> Target when condition args arg1 arg2"
                     action_line = line.strip()
                     parts = action_line.split('==>')
                     if len(parts) == 2:
                         action_name = parts[0].strip()
-                        target_and_condition = parts[1].strip()
+                        target_and_rest = parts[1].strip()
                         
-                        # Parse target and condition
-                        if ' when ' in target_and_condition:
-                            target, condition_str = target_and_condition.split(' when ', 1)
-                            target = target.strip()
-                            condition = parse_simple_condition(condition_str.strip())
-                        elif target_and_condition.endswith(' otherwise'):
-                            target = target_and_condition.replace(' otherwise', '').strip()
+                        # Initialize defaults
+                        target = target_and_rest
+                        condition = None
+                        args = []
+                        
+                        # Parse target, condition, and args
+                        if ' when ' in target_and_rest:
+                            target_part, condition_and_args = target_and_rest.split(' when ', 1)
+                            target = target_part.strip()
+                            
+                            # Check for args in condition part
+                            if ' args ' in condition_and_args:
+                                condition_part, args_part = condition_and_args.split(' args ', 1)
+                                condition = parse_simple_condition(condition_part.strip())
+                                args = [arg.strip() for arg in args_part.split()]
+                            else:
+                                condition = parse_simple_condition(condition_and_args.strip())
+                        elif target_and_rest.endswith(' otherwise'):
+                            target = target_and_rest.replace(' otherwise', '').strip()
                             condition = 'otherwise'
+                        elif ' args ' in target_and_rest:
+                            # No condition, but has args
+                            target_part, args_part = target_and_rest.split(' args ', 1)
+                            target = target_part.strip()
+                            args = [arg.strip() for arg in args_part.split()]
                         else:
-                            target = target_and_condition.strip()
-                            condition = None
+                            target = target_and_rest.strip()
                         
-                        action = Action(action_name, target, condition)
+                        action = Action(action_name, target, condition, args)
                         current_state._actions.append(action)
         
         i += 1
