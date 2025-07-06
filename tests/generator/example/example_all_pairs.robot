@@ -20,21 +20,19 @@ ${INVALID_ACTION}     action_fail
 #     Start
 #     Success
 #
-# Covered actions (10/12):
+# Covered actions (12/12):
 #     logout  (Authenticated -> Start)
 #     perform action  (Authenticated -> Success)
 #     perform action  (Authenticated -> Error)
 #     restart system  (End -> Start)
+#     logout  (Error -> Start)
 #     retry action  (Error -> Authenticated)
 #     exit system  (Failed -> End)
 #     retry authentication  (Failed -> Start)
 #     authenticate user  (Start -> Authenticated)
 #     authenticate user  (Start -> Failed)
+#     continue working  (Success -> Authenticated)
 #     logout  (Success -> Start)
-#
-# Uncovered actions (2/12):
-#     logout (Error -> Start)
-#     continue working (Success -> Authenticated)
 #
 # ============================================================================
 
@@ -42,11 +40,25 @@ ${INVALID_ACTION}     action_fail
 Test 1
   Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
   authenticate user
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
   perform action
   logout
   authenticate user
   perform action
   logout
+  authenticate user
+  perform action
+  continue working
 
 Test 2
   Set Machine Variables  ${INVALID_USER}  ${VALID_ACTION}
@@ -56,9 +68,14 @@ Test 2
   exit system
   restart system
   authenticate user
-
-Test 3
-  Set Machine Variables  ${INVALID_USER}  ${INVALID_ACTION}
+  exit system
+  restart system
+  authenticate user
+  exit system
+  restart system
+  authenticate user
+  exit system
+  restart system
   authenticate user
   exit system
   restart system
@@ -66,14 +83,51 @@ Test 3
   retry authentication
   authenticate user
 
+Test 3
+  Set Machine Variables  ${INVALID_USER}  ${INVALID_ACTION}
+  authenticate user
+  retry authentication
+  authenticate user
+  retry authentication
+  authenticate user
+  exit system
+  restart system
+  authenticate user
+  exit system
+  restart system
+  authenticate user
+  exit system
+  restart system
+  authenticate user
+  retry authentication
+  authenticate user
+  exit system
+  restart system
+  authenticate user
+  exit system
+
 Test 4
   Set Machine Variables  ${VALID_USER}  ${INVALID_ACTION}
-  authenticate user
-  logout
   authenticate user
   perform action
   retry action
   perform action
+  retry action
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
 
 *** Keywords ***
 Set Machine Variables

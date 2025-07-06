@@ -53,8 +53,8 @@ def generate_robot_file(strategy_class, output_filename):
         output = StringIO()
         generator.generate(
             machine, 
-            max_tests=5, 
-            max_actions=6, 
+            max_tests=50, 
+            max_actions=20, 
             output=output, 
             strategy=strategy_class,
             all_actions=all_actions

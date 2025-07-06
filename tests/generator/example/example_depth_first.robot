@@ -49,10 +49,38 @@ Test 1
   perform action
   continue working
   perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
 
 Test 2
   Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
   authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
   perform action
   continue working
   perform action
@@ -65,12 +93,40 @@ Test 3
   perform action
   continue working
   perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
   logout
   authenticate user
 
 Test 4
   Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
   authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
   perform action
   continue working
   logout
@@ -82,9 +138,1058 @@ Test 5
   authenticate user
   perform action
   continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
   logout
   authenticate user
   logout
+
+Test 6
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+
+Test 7
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+
+Test 8
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+
+Test 9
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+
+Test 10
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  continue working
+  logout
+
+Test 11
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+
+Test 12
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+
+Test 13
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  logout
+  authenticate user
+  logout
+
+Test 14
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+
+Test 15
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  logout
+
+Test 16
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  logout
+  authenticate user
+
+Test 17
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  perform action
+
+Test 18
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  logout
+
+Test 19
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+  continue working
+
+Test 20
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+  logout
+
+Test 21
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+  logout
+  authenticate user
+
+Test 22
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+
+Test 23
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+
+Test 24
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+
+Test 25
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+
+Test 26
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  continue working
+  logout
+  authenticate user
+  logout
+
+Test 27
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+
+Test 28
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+
+Test 29
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+
+Test 30
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+
+Test 31
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+  continue working
+  logout
+
+Test 32
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+
+Test 33
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+
+Test 34
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+  logout
+  authenticate user
+  logout
+  authenticate user
+  logout
+
+Test 35
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+
+Test 36
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+
+Test 37
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  logout
+  authenticate user
+
+Test 38
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+
+Test 39
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  logout
+
+Test 40
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  continue working
+
+Test 41
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  logout
+  authenticate user
+  perform action
+  logout
+
+Test 42
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  logout
+  authenticate user
+  logout
+  authenticate user
+
+Test 43
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+
+Test 44
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  perform action
+  continue working
+  logout
+
+Test 45
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+
+Test 46
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+
+Test 47
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+  logout
+
+Test 48
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+
+Test 49
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+  continue working
+  perform action
+  logout
+
+Test 50
+  Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
+  authenticate user
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  continue working
+  perform action
+  logout
+  authenticate user
+  logout
+  authenticate user
+  perform action
+  continue working
+  logout
+  authenticate user
 
 *** Keywords ***
 Set Machine Variables
