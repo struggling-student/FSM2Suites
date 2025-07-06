@@ -1,88 +1,104 @@
-# Copilot Instructions for TravelPlan Project
+# 🚀 Copilot Instructions: Online Shopping App for UI-Based Model-Based Testing
 
-## Project Overview
+## 💡 Overview
 
-**TravelPlan** is a trip planning application that allows users to organize and participate in travel experiences. The system supports trip creation, participation, activity management, user feedback, and advanced querying capabilities.
+We want to implement a simple but functional web application to demonstrate **model-based testing through the UI** using Selenium. The application is an online shopping platform where users browse products, add items to a cart, proceed to checkout, and complete an order.  
 
----
-
-## Entities and Key Concepts
-
-### User
-- Attributes:
-  - `first_name`, `last_name`, `email`, `city_of_origin`, `registration_date`
-- Capabilities:
-  - Create trips as organizers
-  - Join trips organized by others
-  - Provide feedback (score 1 to 5)
-
-### Trip
-- Attributes:
-  - `name`, `min_participants`, `max_participants`, `organizer`
-- Composed of multiple activities
-- Users can participate
-
-### Activity
-- Types: `visit`, `meal`, `tour`, `transport`, `overnight_stay`
-- Attributes:
-  - `name`, `start_time`, `duration`, `price`, `location`, `description`, `ticket_codes[]`
-- Activities can be **composite** (group of sub-activities)
-- Transport activities must define `departure_location` and `arrival_location`
-- Overnight stays are limited to **1 per day per user**
-
-### Location
-- Attributes:
-  - `address`, `city`, `region`, `country`
+The main goal is to enable automated tests to simulate all FSM paths by interacting with UI elements directly.
 
 ---
 
-## Participation and Feedback
+## 🎯 General Goals
 
-- Users can be selectively assigned to specific activities within a trip
-- If no users are specified for an activity, all trip participants are assumed to join
-- Feedback score: integer in `[1, 5]`
-- **User rating (`p`)**:
-  - `p = 0` if avg. rating ≤ 3
-  - Else, `p = floor(0.1 * num_high_scores)` where high score = rating ≥ 4
+- Create a simple but complete frontend that fully represents FSM states visually and interactively.
+- Backend should provide minimal REST API support; no complex authentication or persistence required.
+- UI must make **state transitions explicit and testable**, so Selenium can easily detect and verify them.
 
 ---
 
-## Core Functionalities
+## 🏗️ Backend (API)
 
-### For Registered Users
-- Create and manage trips with associated activities
-- Search for trips by:
-  - Destination and date range
-  - Most visited cities in a time range
-  - Number of trips per region in a country and time range
-  - Budget, region(s), timeframe, and minimum organizer score
+### Stack
 
-### For System Administrators
-- For a given city, compute number of trips organized **per month** in the **last calendar year**
+- Use **Python with FastAPI**.
+- Use in-memory data structures only (mock products, session cart).
+- No database or real user authentication.
 
----
+### Key API Endpoints
 
-## Modeling Constraints
-
-- Ensure data integrity:
-  - Only one overnight stay per user per day
-  - Users can be assigned to specific activities within a trip
-- Composite activities must reference simpler sub-activities
-- Trip activity durations and prices must be consistent with travel times and destinations
+- `POST /login`: Accepts email and password, returns mock token or success flag.
+- `POST /logout`: Invalidates session.
+- `GET /products`: Returns mock product list.
+- `POST /cart/add`: Add item to cart (id and quantity).
+- `POST /cart/remove`: Remove item from cart.
+- `POST /cart/update`: Update quantity.
+- `GET /cart`: Get cart details.
+- `POST /checkout/start`: Start checkout process.
+- `POST /checkout/pay`: Simulate payment, accepts forceSuccess flag to simulate success or failure.
+- `POST /checkout/cancel`: Cancel checkout.
 
 ---
 
-## Implementation Tips
+## 💻 Frontend
 
-- Use **Entity-Relationship (ER)** modeling for initial design
-- Use **UML Use-Case Diagrams** for functional specification
-- Generate relational schema from ER model with appropriate foreign keys and constraints
-- Implement logic for advanced queries using SQL with parameters
+### Stack
+
+- Use **React** (with Vite or Create React App).
+- Plain CSS or minimal styling (no frameworks needed).
+
+### Pages and Visual State Representation
+
+- **Login Page**: Simple form. Once logged in, shows clear indicator (e.g., "State: Browsing").
+- **Product Catalog Page**: Displays list of products with "Add to Cart" buttons.
+- **Cart Page**: Shows items in the cart, allows updates, and has "Proceed to Checkout" button.
+- **Checkout Page**: Simulates shipping/payment, has "Pay" and "Cancel" buttons. Displays explicit message for payment success or failure.
+- **Order Summary Page**: Shows summary with "Continue Shopping" and "Logout" buttons.
+- **Logout Confirmation / Session Ended**: Explicit page showing "Session Ended" or similar text.
 
 ---
 
-## Notes
+## 🔄 State Indication for UI Testing
 
-- The application will be implemented as a **web system** with a database backend
-- Consider modular architecture: `User`, `Trip`, `Activity`, `Location`, `Feedback`, `Statistics`
+- Every main state must be **visibly indicated on the UI** (e.g., header text like `State: CartEditing` or `State: Checkout`).
+- Each button or action should have clear, unique IDs or data attributes (e.g., `data-testid="add-to-cart"`) so Selenium can reliably locate them.
+
+---
+
+## 🧪 Model-Based Testing Support (Selenium)
+
+- Design UI so each FSM state and transition can be triggered by visible actions (buttons, links).
+- Include visible error messages or banners (e.g., "Payment failed. Please retry.") to allow Selenium to verify transitions and negative paths.
+- Keep page transitions explicit (no hidden modals or implicit redirects).
+
+---
+
+## ✅ Implementation Style
+
+- Prioritize **clarity over complexity**.
+- Use simple React state or Context to maintain FSM states on the frontend.
+- Add explicit logs or onscreen text describing the current state to help testing.
+- Backend responses should return clear success or failure flags.
+
+---
+
+## 💬 Additional Implementation Notes
+
+- No real authentication; fake login is enough.
+- Mock data for products and payment simulation.
+- The app must be deployable locally (e.g., `npm run dev` and `uvicorn main:app --reload`).
+- No need for database migrations or user management.
+
+---
+
+## 🎁 Example User Journey (FSM-Aligned)
+
+1. User opens app, sees Login Page → logs in → UI updates to "State: Browsing".
+2. User views catalog, adds products → "State: CartEditing".
+3. User updates cart, proceeds to checkout → "State: Checkout".
+4. User pays → success → "State: OrderConfirmed", sees summary.
+5. User logs out → "State: Session Ended".
+
+---
+
+**Thank you! This app will be used to demonstrate Selenium-driven model-based testing using explicit UI states.**
 
