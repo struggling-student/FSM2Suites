@@ -1,7 +1,7 @@
 *** Settings ***
 Library         ShoppingKeywordLibrary.py
-Suite Setup     Setup Shopping Environment
-Suite Teardown  Teardown Shopping Environment
+Test Setup      Setup Shopping Environment
+Test Teardown   Teardown Shopping Environment
 
 
 *** Variables ***
@@ -20,7 +20,7 @@ Test Basic Login Flow
 
 Test Add Product To Cart
     [Documentation]    Test adding a product to cart
-    [Setup]    Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
+    Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
     Assert Products Are Displayed
     Add Product To Cart    1    1
     Assert Cart Contains Items
@@ -29,7 +29,7 @@ Test Add Product To Cart
 
 Test Complete Shopping Flow
     [Documentation]    Test complete shopping workflow
-    [Setup]    Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
+    Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
     
     # Browse and add product
     Add Product To Cart    1    1
@@ -49,7 +49,7 @@ Test Complete Shopping Flow
 
 Test Payment Failure Flow
     [Documentation]    Test payment failure and retry
-    [Setup]    Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
+    Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
     
     # Add product and checkout
     Add Product To Cart    2    1
@@ -68,7 +68,7 @@ Test Payment Failure Flow
 
 Test Logout Flow
     [Documentation]    Test logout functionality
-    [Setup]    Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
+    Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
     
     # Logout from browsing state
     Logout
