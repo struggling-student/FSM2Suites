@@ -1,8 +1,8 @@
-# RoboMachine Test Generation Strategies
+# Machine Test Generation Strategies
 
 ## Overview
 
-RoboMachine is a test data generator for Robot Framework that uses finite state machine (FSM) models to automatically generate test cases. It supports three different strategies for test generation, each with its own approach to exploring the state space and generating test paths.
+Machine is a test data generator for Robot Framework that uses finite state machine (FSM) models to automatically generate test cases. It supports three different strategies for test generation, each with its own approach to exploring the state space and generating test paths.
 
 This document explains how each of the three strategies works: **Depth First Search (DFS)**, **Random**, and **AllPairs-Random**.
 
@@ -229,4 +229,4 @@ All strategies support specifying a target end state (`--to-state` parameter). T
 - **Random** and **AllPairs-Random** are memory-efficient as they generate tests one at a time
 - The `max_tests` parameter limits total test generation to prevent infinite generation
 
-This comprehensive approach allows RoboMachine users to choose the most appropriate strategy based on their specific testing needs, model complexity, and performance requirements.
+This comprehensive approach allows Machine users to choose the most appropriate strategy based on their specific testing needs, model complexity, and performance requirements.
