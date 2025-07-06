@@ -1,5 +1,5 @@
 from __future__ import print_function
-
+import re
 from pyparsing import (CharsNotIn, Forward, Literal, LineEnd, OneOrMore, Optional,
                        Regex, StringEnd, White, Word, ZeroOrMore,
                        delimitedList, printables,
@@ -199,12 +199,144 @@ def resolve_whitespace(text):
 
 def parse(text):
     try:
-        return machine.parseString(resolve_whitespace(text), parseAll=True)[0]
-    except ParseBaseException as pe:
-        print('Exception at line {:d}'.format(pe.lineno))
-        print(pe.msg)
-        print('line: "{:s}"'.format(pe.line))
-        raise MachineParsingException(pe.msg)
-    except AssertionError as ae:
-        print(ae)
-        raise MachineParsingException(ae)
+        # Try the improved simple parser first (better Robot Framework support)
+        return parse_simple(text)
+    except Exception as e:
+        print('Simple parser failed: {:s}'.format(str(e)))
+        print('Falling back to original pyparsing parser...')
+        
+        # Fall back to the original pyparsing parser
+        try:
+            return machine.parseString(resolve_whitespace(text), parseAll=True)[0]
+        except ParseBaseException as pe:
+            print('Original parser also failed at line {:d}'.format(pe.lineno))
+            print(pe.msg)
+            print('line: "{:s}"'.format(pe.line))
+            raise MachineParsingException(f"Both parsers failed. Simple: {e}, Original: {pe.msg}")
+        except AssertionError as ae:
+            print(ae)
+            raise MachineParsingException(f"Both parsers failed. Simple: {e}, Original: {ae}")
+
+
+# Improved simple parser for Robot Framework machine files
+
+def parse_simple_condition(condition_str):
+    """Parse a simple condition string"""
+    # Simple condition parsing - can be enhanced
+    if '==' in condition_str and 'and' in condition_str:
+        # Handle: ${EMAIL} == ${VALID_EMAIL} and ${PASSWORD} == ${VALID_PASSWORD}
+        parts = condition_str.split(' and ')
+        conditions = []
+        for part in parts:
+            if '==' in part:
+                var, val = part.split('==', 1)
+                conditions.append(Condition(var.strip(), val.strip()))
+        return AndRule(conditions) if len(conditions) > 1 else conditions[0]
+    elif '==' in condition_str:
+        var, val = condition_str.split('==', 1)
+        return Condition(var.strip(), val.strip())
+    else:
+        return condition_str
+
+
+def parse_simple(content):
+    """Simple line-by-line parser for Robot Framework machine files"""
+    lines = content.strip().split('\n')
+    current_section = None
+    variables = []
+    states = []
+    current_state = None
+    settings_content = ""
+    variables_content = ""
+    keywords_content = ""
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped_line = line.strip()
+        
+        # Skip empty lines and comments
+        if not stripped_line or stripped_line.startswith('#'):
+            i += 1
+            continue
+        
+        # Section headers
+        if stripped_line == '*** Settings ***':
+            current_section = 'settings'
+            i += 1
+            continue
+        elif stripped_line == '*** Variables ***':
+            current_section = 'variables'
+            i += 1
+            continue
+        elif stripped_line == '*** Machine ***':
+            current_section = 'machine'
+            i += 1
+            continue
+        elif stripped_line == '*** Keywords ***':
+            current_section = 'keywords'
+            i += 1
+            continue
+        
+        # Parse content based on current section
+        if current_section == 'machine':
+            # Variable definition
+            if stripped_line.startswith('${') and 'any of' in stripped_line:
+                var_match = re.match(r'\$\{(\w+)\}\s+any of\s+(.+)', stripped_line)
+                if var_match:
+                    var_name = '${' + var_match.group(1) + '}'
+                    values = [v.strip() for v in var_match.group(2).split()]
+                    variables.append(Variable(var_name, values))
+            
+            # State definition (line with no leading spaces and is capitalized)
+            elif stripped_line and not line.startswith(' ') and stripped_line[0].isupper():
+                # Save previous state
+                if current_state:
+                    states.append(current_state)
+                
+                # Start new state
+                current_state = State(stripped_line, [], [])
+            
+            # Skip [Actions] header
+            elif stripped_line == '[Actions]':
+                pass  # Just skip this header
+            
+            # Action definition (starts with 4+ spaces and contains ==>)
+            elif line.startswith('    ') and '==>' in line:
+                if current_state:
+                    # Parse action: "    action ==> Target when condition"
+                    action_line = line.strip()
+                    parts = action_line.split('==>')
+                    if len(parts) == 2:
+                        action_name = parts[0].strip()
+                        target_and_condition = parts[1].strip()
+                        
+                        # Parse target and condition
+                        if ' when ' in target_and_condition:
+                            target, condition_str = target_and_condition.split(' when ', 1)
+                            target = target.strip()
+                            condition = parse_simple_condition(condition_str.strip())
+                        elif target_and_condition.endswith(' otherwise'):
+                            target = target_and_condition.replace(' otherwise', '').strip()
+                            condition = 'otherwise'
+                        else:
+                            target = target_and_condition.strip()
+                            condition = None
+                        
+                        action = Action(action_name, target, condition)
+                        current_state._actions.append(action)
+        
+        i += 1
+    
+    # Add the last state
+    if current_state:
+        states.append(current_state)
+    
+    return Machine(
+        states=states,
+        variables=variables,
+        rules=[],
+        settings_table=settings_content,
+        variables_table=variables_content,
+        keywords_table=keywords_content
+    )
