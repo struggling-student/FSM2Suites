@@ -51,7 +51,7 @@ def main():
             machine = parse(inp.read())
     except IOError as e:
         sys.exit(unicode(e))
-    except MachineParsingException as e:
+    except MachineParsingException:
         sys.exit(1)
 
     # File names:
@@ -71,48 +71,16 @@ def main():
                            max_actions=args.actions_max,
                            to_state=args.to_state,
                            output=out,
-                           strategy=strategy_class)
+                           strategy=strategy_class,
+                           all_actions=all_actions)
     print('Generated test file: {:s}'.format(output_test_file))
 
-    # Coverage information:
+    # Coverage information is now included in the generated file as comments
     covered_states = generator.visited_states
     covered_actions = generator.visited_actions
-    uncovered_states = set(machine.states).difference(generator.visited_states)
-    uncovered_actions = all_actions.difference(generator.visited_actions)
-    #
-    # Write to STDOUT:
-    print('-' * 78)
-    #
-    # Covered states:
-    print('Covered states ({:d}/{:d}):'.format(len(covered_states), len(machine.states)))
-    if covered_states:
-        for state in covered_states:
-            print('    {:s}'.format(state.name))
-    else:
-        print('    -none-')
-    #
-    # Covered actions:
-    print('\nCovered actions ({:d}/{:d}):'.format(len(covered_actions), len(all_actions)))
-    if covered_actions:
-        for action in covered_actions:
-            action_name = action.name if action.name != '' else '[tau]'
-            print('    {:s}  ({:s} -> {:s})'.format(action_name, action._parent_state.name, action.next_state.name))
-    else:
-        print('    -none-')
-    #
-    # Uncovered states:
-    if uncovered_states:
-        print('\nUncovered states ({:d}/{:d}):'.format(len(uncovered_states), len(machine.states)))
-        for state in uncovered_states:
-            print('    {:s}'.format(state.name))
-    #
-    # Uncovered actions:
-    if uncovered_actions:
-        print('\nUncovered actions ({:d}/{:d}):'.format(len(uncovered_actions), len(all_actions)))
-        for action in uncovered_actions:
-            action_name = action.name if action.name != '' else '[tau]'
-            print('    {:s} ({:s} -> {:s})'.format(action_name, action._parent_state.name, action.next_state.name))
-    print('-' * 78)
+    print('Coverage summary: {:d}/{:d} states, {:d}/{:d} actions covered'.format(
+        len(covered_states), len(machine.states),
+        len(covered_actions), len(all_actions)))
 
 
 def _select_strategy(strategy):
