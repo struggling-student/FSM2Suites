@@ -8,6 +8,6 @@ selenium==4.15.2
 # HTTP requests for application checks
 requests==2.31.0
 
-# RoboMachine for test generation
-# Note: Install from the local robomachine directory
-# cd ../RoboMachine && pip install -e .
+# Machine for test generation
+# Note: Install from the local machine directory
+# cd ../Machine && pip install -e .

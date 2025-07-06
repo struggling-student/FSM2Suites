@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate Robot Framework test cases from RoboMachine model for Shopping Cart testing.
+Generate Robot Framework test cases from Machine model for Shopping Cart testing.
 """
 import os
 import sys
@@ -8,34 +8,34 @@ import subprocess
 from pathlib import Path
 
 def generate_tests():
-    """Generate tests from the RoboMachine model."""
+    """Generate tests from the Machine model."""
     
     # Get current directory
     current_dir = Path(__file__).parent.absolute()
     
     # Input and output files
-    robomachine_file = current_dir / "T02.robomachine"
+    machine_file = current_dir / "T02.machine"
     output_file = current_dir / "T02_generated.robot"
     
-    # Check if RoboMachine file exists
-    if not robomachine_file.exists():
-        print(f"Error: RoboMachine file not found: {robomachine_file}")
+    # Check if Machine file exists
+    if not machine_file.exists():
+        print(f"Error: Machine file not found: {machine_file}")
         return False
     
-    print(f"Generating tests from: {robomachine_file}")
+    print(f"Generating tests from: {machine_file}")
     print(f"Output file: {output_file}")
     
     try:
-        # Set up environment with RoboMachine source path
+        # Set up environment with Machine source path
         env = os.environ.copy()
-        robomachine_src_path = "/Users/lucian/University/SoftwareEngineering/test/RoboMachine/src"
+        machine_src_path = "/Users/lucian/University/SoftwareEngineering/tests/generator/src"
         if "PYTHONPATH" in env:
-            env["PYTHONPATH"] = f"{robomachine_src_path}:{env['PYTHONPATH']}"
+            env["PYTHONPATH"] = f"{machine_src_path}:{env['PYTHONPATH']}"
         else:
-            env["PYTHONPATH"] = robomachine_src_path
+            env["PYTHONPATH"] = machine_src_path
         
-        # Generate tests using RoboMachine
-        # Using the robomachine command with various strategies
+        # Generate tests using Machine
+        # Using the machine command with various strategies
         
         # Strategy 1: Comprehensive coverage using multiple approaches
         cmd_all = [
@@ -43,7 +43,7 @@ def generate_tests():
             "exec(open('generate_full_coverage.py').read())"
         ]
         
-        print("Running RoboMachine generator...")
+        print("Running Machine generator...")
         print(" ".join(cmd_all))
         
         result = subprocess.run(cmd_all, capture_output=True, text=True, env=env, cwd=current_dir)
@@ -54,14 +54,14 @@ def generate_tests():
             comprehensive_file.rename(output_file)
         
         # Check if the output file was generated, even if return code is non-zero
-        # (RoboMachine might fail when trying to run tests but succeed in generating them)
+        # (Machine might fail when trying to run tests but succeed in generating them)
         if output_file.exists():
             print("✅ Test generation successful!")
             print(f"Generated tests saved to: {output_file}")
             
-            # Print RoboMachine output for information
+            # Print Machine output for information
             if result.stdout:
-                print("\n📋 RoboMachine output:")
+                print("\n📋 Machine output:")
                 print(result.stdout)
             
             # Show some statistics
@@ -93,19 +93,19 @@ def generate_tests():
             return False
             
     except FileNotFoundError:
-        print("❌ Error: robomachine not found in Python path")
-        print("Make sure RoboMachine is installed:")
-        print("pip install robomachine")
+        print("❌ Error: machine not found in Python path")
+        print("Make sure Machine is installed:")
+        print("pip install machine")
         return False
     except Exception as e:
         print(f"❌ Error generating tests: {e}")
         return False
 
 def generate_with_different_strategies():
-    """Generate tests with different RoboMachine strategies."""
+    """Generate tests with different Machine strategies."""
     
     current_dir = Path(__file__).parent.absolute()
-    robomachine_file = current_dir / "T02.robomachine"
+    machine_file = current_dir / "T02.machine"
     
     strategies = [
         ("depth-first", "T02_depth_first.robot"),
@@ -119,11 +119,11 @@ def generate_with_different_strategies():
         output_file = current_dir / output_name
         
         cmd = [
-            "python", "-m", "robomachine.runner",
+            "python", "-m", "machine.runner",
             "--output", str(output_file),
             "--tests-max", "30",
             "--generation-algorithm", strategy,
-            str(robomachine_file)
+            str(machine_file)
         ]
         
         print(f"\n📋 Generating with {strategy} strategy...")
@@ -141,7 +141,7 @@ def generate_with_different_strategies():
             print(f"❌ Error with {strategy}: {e}")
 
 if __name__ == "__main__":
-    print("🛒 Shopping Cart RoboMachine Test Generator")
+    print("🛒 Shopping Cart Machine Test Generator")
     print("=" * 50)
     
     # Check if we should generate with multiple strategies

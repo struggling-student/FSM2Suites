@@ -12,19 +12,19 @@ def generate_comprehensive_tests():
     """Generate tests using multiple strategies to achieve full coverage."""
     
     current_dir = Path(__file__).parent.absolute()
-    robomachine_file = current_dir / "T02.robomachine"
+    machine_file = current_dir / "T02.machine"
     
-    if not robomachine_file.exists():
-        print(f"❌ Error: {robomachine_file} not found")
+    if not machine_file.exists():
+        print(f"❌ Error: {machine_file} not found")
         return False
     
     # Set up environment
     env = os.environ.copy()
-    robomachine_src_path = "/Users/lucian/University/SoftwareEngineering/test/RoboMachine/src"
+    machine_src_path = "/Users/lucian/University/SoftwareEngineering/tests/generator/src"
     if "PYTHONPATH" in env:
-        env["PYTHONPATH"] = f"{robomachine_src_path}:{env['PYTHONPATH']}"
+        env["PYTHONPATH"] = f"{machine_src_path}:{env['PYTHONPATH']}"
     else:
-        env["PYTHONPATH"] = robomachine_src_path
+        env["PYTHONPATH"] = machine_src_path
     
     # Multiple generation strategies for comprehensive coverage
     strategies = [
@@ -81,7 +81,7 @@ def generate_comprehensive_tests():
         output_file = current_dir / strategy["output"]
         
         cmd = [
-            "python3", "-m", "robomachine.runner",
+            "python3", "-m", "machine.runner",
             "--output", str(output_file),
             "--tests-max", str(strategy["tests_max"]),
             "--actions-max", str(strategy["actions_max"]),
@@ -91,7 +91,7 @@ def generate_comprehensive_tests():
         if strategy["target_state"]:
             cmd.extend(["--to-state", strategy["target_state"]])
             
-        cmd.append(str(robomachine_file))
+        cmd.append(str(machine_file))
         
         result = subprocess.run(cmd, capture_output=True, text=True, env=env)
         

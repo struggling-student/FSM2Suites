@@ -1,5 +1,5 @@
 """
-Shopping Cart State Machine Keyword Library for RoboMachine testing.
+Shopping Cart State Machine Keyword Library for Machine testing.
 This library provides keywords to test the shopping cart FSM using Selenium WebDriver.
 """
 from selenium import webdriver
@@ -540,11 +540,11 @@ class ShoppingKeywordLibrary:
             logger.error(f"Failed to fill shipping info: {e}")
     
     # =============================================================================
-    # CONDITIONS FOR ROBOMACHINE
+    # CONDITIONS FOR MACHINE
     # =============================================================================
     
     def cart_has_items(self):
-        """Check if cart has items (used in RoboMachine conditions)."""
+        """Check if cart has items (used in Machine conditions)."""
         try:
             cart_items = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid^='cart-item-']")
             return len(cart_items) > 0
