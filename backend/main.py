@@ -128,6 +128,11 @@ def get_current_session():
 def root():
     return {"message": "Shopping App API", "version": "1.0.0"}
 
+@app.get("/health")
+def health():
+    """Health check endpoint for testing"""
+    return {"status": "healthy", "service": "shopping-api"}
+
 @app.post("/login", response_model=LoginResponse)
 def login(request: LoginRequest):
     """Mock login endpoint - accepts any email/password"""
