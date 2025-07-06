@@ -1,0 +1,71 @@
+*** Settings ***
+Library         ExampleLibrary.py
+Test Setup      Setup Example Environment
+
+*** Variables ***
+${VALID_USER}         user1
+${INVALID_USER}       invalid_user
+${VALID_ACTION}       action_success
+${INVALID_ACTION}     action_fail
+
+*** Machine ***
+${USER}       any of    ${VALID_USER}      ${INVALID_USER}
+${ACTION}     any of    ${VALID_ACTION}    ${INVALID_ACTION}
+
+Start
+  [Actions]
+    authenticate user        ==>  Authenticated    when  ${USER} == ${VALID_USER}
+    authenticate user        ==>  Failed           when  ${USER} == ${INVALID_USER}
+
+Authenticated
+  [Actions]
+    perform action           ==>  Success          when  ${ACTION} == ${VALID_ACTION}
+    perform action           ==>  Error            when  ${ACTION} == ${INVALID_ACTION}
+    logout                   ==>  Start
+
+Failed
+  [Actions]
+    retry authentication     ==>  Start
+    exit system              ==>  End
+
+Success
+  [Actions]
+    continue working         ==>  Authenticated
+    logout                   ==>  Start
+
+Error
+  [Actions]
+    retry action             ==>  Authenticated
+    logout                   ==>  Start
+
+End
+  [Actions]
+    restart system           ==>  Start
+
+*** Keywords ***
+Setup Example Environment
+    Print    Setting up example environment
+
+Authenticate User
+    Print    Authenticating user: ${USER}
+
+Perform Action
+    Print    Performing action: ${ACTION}
+
+Logout
+    Print    User logging out
+
+Retry Authentication
+    Print    Retrying authentication
+
+Exit System
+    Print    Exiting system
+
+Continue Working
+    Print    Continuing work
+
+Retry Action
+    Print    Retrying action
+
+Restart System
+    Print    Restarting system
