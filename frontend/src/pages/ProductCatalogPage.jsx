@@ -22,13 +22,17 @@ function ProductCatalogPage() {
     }
   };
 
-  const handleAddToCart = (product) => {
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: 1
-    });
+  const handleAddToCart = async (product) => {
+    try {
+      await addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: 1
+      });
+    } catch (error) {
+      console.error('Failed to add product to cart:', error);
+    }
   };
 
   const getTotalItems = () => {
