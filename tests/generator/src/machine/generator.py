@@ -44,17 +44,141 @@ class Generator(object):
             i += 1
 
 
+    def _write_coverage_comments(self, machine, all_actions, output):
+        """Write coverage information as comments at the start of the file"""
+        covered_states = self.visited_states
+        covered_actions = self.visited_actions
+        uncovered_states = set(machine.states).difference(self.visited_states)
+        uncovered_actions = all_actions.difference(self.visited_actions)
+        
+        output.write('# ' + '=' * 76 + '\n')
+        output.write('# TEST COVERAGE INFORMATION\n')
+        output.write('# ' + '=' * 76 + '\n')
+        output.write('#\n')
+        
+        # Covered states
+        output.write('# Covered states ({:d}/{:d}):\n'.format(len(covered_states), len(machine.states)))
+        if covered_states:
+            for state in sorted(covered_states, key=lambda s: s.name):
+                output.write('#     {:s}\n'.format(state.name))
+        else:
+            output.write('#     -none-\n')
+        output.write('#\n')
+        
+        # Covered actions
+        output.write('# Covered actions ({:d}/{:d}):\n'.format(len(covered_actions), len(all_actions)))
+        if covered_actions:
+            for action in sorted(covered_actions, key=lambda a: (a._parent_state.name, a.name)):
+                action_name = action.name if action.name != '' else '[tau]'
+                output.write('#     {:s}  ({:s} -> {:s})\n'.format(action_name, action._parent_state.name, action.next_state.name))
+        else:
+            output.write('#     -none-\n')
+        output.write('#\n')
+        
+        # Uncovered states
+        if uncovered_states:
+            output.write('# Uncovered states ({:d}/{:d}):\n'.format(len(uncovered_states), len(machine.states)))
+            for state in sorted(uncovered_states, key=lambda s: s.name):
+                output.write('#     {:s}\n'.format(state.name))
+            output.write('#\n')
+        
+        # Uncovered actions
+        if uncovered_actions:
+            output.write('# Uncovered actions ({:d}/{:d}):\n'.format(len(uncovered_actions), len(all_actions)))
+            for action in sorted(uncovered_actions, key=lambda a: (a._parent_state.name, a.name)):
+                action_name = action.name if action.name != '' else '[tau]'
+                output.write('#     {:s} ({:s} -> {:s})\n'.format(action_name, action._parent_state.name, action.next_state.name))
+            output.write('#\n')
+        
+        output.write('# ' + '=' * 76 + '\n')
+        output.write('\n')
+
+    def _write_coverage_comments(self, machine, all_actions, output):
+        """Write coverage information as comments at the start of the file"""
+        covered_states = self.visited_states
+        covered_actions = self.visited_actions
+        uncovered_states = set(machine.states).difference(self.visited_states)
+        uncovered_actions = all_actions.difference(self.visited_actions)
+        
+        output.write('# ' + '=' * 76 + '\n')
+        output.write('# TEST COVERAGE INFORMATION\n')
+        output.write('# ' + '=' * 76 + '\n')
+        output.write('#\n')
+        
+        # Covered states
+        output.write('# Covered states ({:d}/{:d}):\n'.format(len(covered_states), len(machine.states)))
+        if covered_states:
+            for state in sorted(covered_states, key=lambda s: s.name):
+                output.write('#     {:s}\n'.format(state.name))
+        else:
+            output.write('#     -none-\n')
+        output.write('#\n')
+        
+        # Covered actions
+        output.write('# Covered actions ({:d}/{:d}):\n'.format(len(covered_actions), len(all_actions)))
+        if covered_actions:
+            for action in sorted(covered_actions, key=lambda a: (a._parent_state.name, a.name)):
+                action_name = action.name if action.name != '' else '[tau]'
+                output.write('#     {:s}  ({:s} -> {:s})\n'.format(action_name, action._parent_state.name, action.next_state.name))
+        else:
+            output.write('#     -none-\n')
+        output.write('#\n')
+        
+        # Uncovered states
+        if uncovered_states:
+            output.write('# Uncovered states ({:d}/{:d}):\n'.format(len(uncovered_states), len(machine.states)))
+            for state in sorted(uncovered_states, key=lambda s: s.name):
+                output.write('#     {:s}\n'.format(state.name))
+            output.write('#\n')
+        
+        # Uncovered actions
+        if uncovered_actions:
+            output.write('# Uncovered actions ({:d}/{:d}):\n'.format(len(uncovered_actions), len(all_actions)))
+            for action in sorted(uncovered_actions, key=lambda a: (a._parent_state.name, a.name)):
+                action_name = action.name if action.name != '' else '[tau]'
+                output.write('#     {:s} ({:s} -> {:s})\n'.format(action_name, action._parent_state.name, action.next_state.name))
+            output.write('#\n')
+        
+        output.write('# ' + '=' * 76 + '\n')
+        output.write('\n')
+
     def generate(self, machine, max_tests=1000, max_actions=None, to_state=None, output=None,
-                 strategy=DepthFirstSearchStrategy):
+                 strategy=DepthFirstSearchStrategy, all_actions=None):
         max_actions = -1 if max_actions is None else max_actions
-        machine.write_settings_table(output)
-        machine.write_variables_table(output)
-        output.write('*** Test Cases ***')
-        self._write_tests(machine, max_tests, max_actions, to_state, output, strategy)
-        machine.write_keywords_table(output)
+        
+        # Write coverage comments first if all_actions is provided
+        if all_actions is not None:
+            # First, generate everything in memory to collect coverage info
+            temp_output = StringIO()
+            machine.write_settings_table(temp_output)
+            machine.write_variables_table(temp_output)
+            temp_output.write('*** Test Cases ***')
+            self._write_tests(machine, max_tests, max_actions, to_state, temp_output, strategy)
+            machine.write_keywords_table(temp_output)
+            
+            # Now write coverage comments and then the generated content
+            self._write_coverage_comments(machine, all_actions, output)
+            output.write(temp_output.getvalue())
+        else:
+            # Original behavior when no coverage info is needed
+            machine.write_settings_table(output)
+            machine.write_variables_table(output)
+            output.write('*** Test Cases ***')
+            self._write_tests(machine, max_tests, max_actions, to_state, output, strategy)
+            machine.write_keywords_table(output)
 
 
-    def transform(self, text):
+    def transform(self, text, all_actions=None):
         output = StringIO()
-        self.generate(parse(text), output=output)
+        machine = parse(text)
+        
+        # If all_actions is not provided, collect them from the machine
+        if all_actions is None:
+            all_actions = set()
+            for state in machine.states:
+                for action in state._actions:
+                    action._parent_state = state
+                    all_actions.add(action)
+        
+        self.generate(machine, output=output, all_actions=all_actions)
         return output.getvalue()
