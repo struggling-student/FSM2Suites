@@ -6,9 +6,14 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
+from webdriver_manager.firefox import GeckoDriverManager
 from robot.api import logger
 import time
+import requests
+import subprocess
+from pathlib import Path
 
 
 class ShoppingKeywordLibrary:
@@ -18,21 +23,99 @@ class ShoppingKeywordLibrary:
         self.driver = None
         self.wait = None
         self.base_url = "http://localhost:5173"
+        self.backend_url = "http://localhost:8000"
         self.current_state = "Login"
         self.authenticated = False
         self.cart_items = []
+        self.backend_process = None
+        self.frontend_process = None
+        
+    def start_backend_server(self):
+        """Start the FastAPI backend server."""
+        test_dir = Path(__file__).parent
+        backend_dir = test_dir.parent.parent / "backend"
+        
+        logger.info("Starting backend server...")
+        self.backend_process = subprocess.Popen([
+            "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"
+        ], cwd=str(backend_dir), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # Wait for backend to be ready
+        max_attempts = 30
+        for attempt in range(max_attempts):
+            try:
+                response = requests.get(f"{self.backend_url}/health", timeout=2)
+                if response.status_code == 200:
+                    logger.info("Backend server is ready")
+                    return
+            except requests.exceptions.RequestException:
+                pass
+            time.sleep(1)
+        
+        raise Exception("Backend server failed to start within 30 seconds")
+    
+    def start_frontend_server(self):
+        """Start the React frontend server."""
+        test_dir = Path(__file__).parent
+        frontend_dir = test_dir.parent.parent / "frontend"
+        
+        logger.info("Starting frontend server...")
+        self.frontend_process = subprocess.Popen([
+            "npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"
+        ], cwd=str(frontend_dir), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # Wait for frontend to be ready
+        max_attempts = 30
+        for attempt in range(max_attempts):
+            try:
+                response = requests.get(self.base_url, timeout=2)
+                if response.status_code == 200:
+                    logger.info("Frontend server is ready")
+                    return
+            except requests.exceptions.RequestException:
+                pass
+            time.sleep(1)
+        
+        raise Exception("Frontend server failed to start within 30 seconds")
+    
+    def stop_servers(self):
+        """Stop both backend and frontend servers."""
+        logger.info("Stopping servers...")
+        
+        if self.backend_process:
+            self.backend_process.terminate()
+            try:
+                self.backend_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.backend_process.kill()
+            self.backend_process = None
+            
+        if self.frontend_process:
+            self.frontend_process.terminate()
+            try:
+                self.frontend_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.frontend_process.kill()
+            self.frontend_process = None
+        
+        logger.info("Servers stopped")
         
     def setup_shopping_environment(self):
-        """Setup Selenium WebDriver and navigate to the application."""
-        # Setup Chrome options for headless testing (optional)
-        chrome_options = Options()
-        # Uncomment the next line for headless mode
-        # chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
+        """Setup servers and Selenium WebDriver, then navigate to the application."""
+        # Start servers first
+        self.start_backend_server()
+        self.start_frontend_server()
         
-        # Initialize WebDriver
-        self.driver = webdriver.Chrome(options=chrome_options)
+        # Setup Firefox WebDriver
+        firefox_options = Options()
+        # Uncomment the next line for headless mode
+        # firefox_options.add_argument("--headless")
+        firefox_options.add_argument("--width=1920")
+        firefox_options.add_argument("--height=1080")
+        
+        # Initialize WebDriver with auto-managed GeckoDriver
+        service = Service(GeckoDriverManager().install())
+        self.driver = webdriver.Firefox(service=service, options=firefox_options)
         self.wait = WebDriverWait(self.driver, 10)
         
         # Navigate to the application
@@ -40,11 +123,21 @@ class ShoppingKeywordLibrary:
         self.current_state = "Login"
         logger.info(f"Navigated to {self.base_url}")
         
+        # Wait for page to load
+        self.wait.until(
+            EC.any_of(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='login-title']")),
+                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='catalog-title']"))
+            )
+        )
+        
     def teardown_shopping_environment(self):
-        """Close the browser and cleanup."""
+        """Close the browser and stop servers."""
         if self.driver:
             self.driver.quit()
             logger.info("Browser closed")
+        
+        self.stop_servers()
     
     # =============================================================================
     # ASSERTION KEYWORDS
