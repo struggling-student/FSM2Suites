@@ -14,6 +14,8 @@ ${INVALID_PASSWORD}    wrongpassword
 ${EMAIL}       any of    ${VALID_EMAIL}      ${INVALID_EMAIL}
 ${PASSWORD}    any of    ${VALID_PASSWORD}   ${INVALID_PASSWORD}
 ${PAYMENT}     any of    success    failure
+${PRODUCT_ID}  any of    1    2    3
+${QUANTITY}    any of    1    2
 
 
 Login
@@ -28,7 +30,7 @@ LoginFailed
 
 Browsing
   [Actions]
-    add product to cart       ==>  CartEditing
+    add product to cart       ==>  CartEditing    args    ${PRODUCT_ID}    ${QUANTITY}
     logout                    ==>  SessionEnded
 
 CartEditing
@@ -38,8 +40,8 @@ CartEditing
 
 Checkout
   [Actions]
-    process payment           ==>  OrderConfirmed  when  ${PAYMENT} == success
-    process payment           ==>  PaymentFailed   when  ${PAYMENT} == failure
+    process payment           ==>  OrderConfirmed  when  ${PAYMENT} == success    args    ${PAYMENT}
+    process payment           ==>  PaymentFailed   when  ${PAYMENT} == failure    args    ${PAYMENT}
     cancel checkout           ==>  CartEditing
     logout                    ==>  SessionEnded
 
