@@ -1,7 +1,9 @@
 {
     "files.exclude": {
         "**/*.pyc": true,
+        "**/report.html": true,
+        "**/log.html": true,
+        "**/output.xml": true,
         "**/__pycache__": true,
-        "**/.env": true
     }
 }
