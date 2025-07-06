@@ -41,6 +41,13 @@ def generate_robot_file(strategy_class, output_filename):
         # Load the machine
         machine = load_example_machine()
         
+        # Collect all actions for coverage tracking
+        all_actions = set()
+        for state in machine.states:
+            for action in state._actions:
+                action._parent_state = state
+                all_actions.add(action)
+        
         # Generate tests
         generator = Generator()
         output = StringIO()
@@ -49,7 +56,8 @@ def generate_robot_file(strategy_class, output_filename):
             max_tests=5, 
             max_actions=6, 
             output=output, 
-            strategy=strategy_class
+            strategy=strategy_class,
+            all_actions=all_actions
         )
         
         result = output.getvalue()
