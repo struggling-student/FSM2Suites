@@ -1,7 +1,7 @@
 import re
 
 
-class RoboMachine(object):
+class Machine(object):
 
     def __init__(self, states, variables, rules, settings_table=None,
                  variables_table=None, keywords_table=None):

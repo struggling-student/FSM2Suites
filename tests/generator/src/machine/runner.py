@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import os
 import sys
-from .parsing import RoboMachineParsingException, parse
+from .parsing import MachineParsingException, parse
 
 from . import __version__
 import argparse
@@ -13,7 +13,7 @@ from .strategies import DepthFirstSearchStrategy, RandomStrategy
 if sys.version_info.major == 3:
     unicode = str
 
-parser = argparse.ArgumentParser(description='RoboMachine {:s} - '.format(__version__) +
+parser = argparse.ArgumentParser(description='Machine {:s} - '.format(__version__) +
                                  'a test data generator for Robot Framework',
                                  formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('input', type=str, help='input file')
@@ -51,7 +51,7 @@ def main():
             machine = parse(inp.read())
     except IOError as e:
         sys.exit(unicode(e))
-    except RoboMachineParsingException as e:
+    except MachineParsingException as e:
         sys.exit(1)
 
     # File names:
@@ -122,7 +122,7 @@ def _select_strategy(strategy):
         return DepthFirstSearchStrategy
     if strategy == 'allpairs-random':
         try:
-            from src.robomachine.allpairsstrategy import AllPairsRandomStrategy
+            from src.machine.allpairsstrategy import AllPairsRandomStrategy
             return AllPairsRandomStrategy
         except ImportError:
             print('ERROR! allpairs-random strategy needs the AllPairs module')

@@ -4,7 +4,7 @@ from pyparsing import (CharsNotIn, Forward, Literal, LineEnd, OneOrMore, Optiona
                        Regex, StringEnd, White, Word, ZeroOrMore,
                        delimitedList, printables,
                        ParseBaseException)
-from .model import RoboMachine, State, Action, Variable
+from .model import Machine, State, Action, Variable
 from .rules import (AndRule, Condition, EquivalenceRule, OrRule,
                                    NotRule, ImplicationRule, UnequalCondition,
                                    GreaterThanCondition, GreaterThanOrEqualCondition,
@@ -163,7 +163,7 @@ machine = Optional(settings_table).setResultsName('settings_table') + \
           Optional(keywords_table).setResultsName('keywords_table')
 
 
-def create_robomachine(p):
+def create_machine(p):
     # For some reason, p.rules contains only the _first_ rule. Work around it
     # by finding rule elements based on their type.
     def is_rule(obj):
@@ -171,7 +171,7 @@ def create_robomachine(p):
                                 OrRule, NotRule))
 
     rules = [v for v in p if is_rule(v)]
-    return RoboMachine(list(p.states),
+    return Machine(list(p.states),
                        list(p.variables),
                        rules,  # p.rules contains only first rule(!)
                        settings_table=p.settings_table,
@@ -179,12 +179,12 @@ def create_robomachine(p):
                        keywords_table=p.keywords_table)
 
 
-machine.setParseAction(create_robomachine)
+machine.setParseAction(create_machine)
 machine.ignore(comment)
 machine.setWhitespaceChars(' ')
 
 
-class RoboMachineParsingException(Exception):
+class MachineParsingException(Exception):
     pass
 
 
@@ -204,7 +204,7 @@ def parse(text):
         print('Exception at line {:d}'.format(pe.lineno))
         print(pe.msg)
         print('line: "{:s}"'.format(pe.line))
-        raise RoboMachineParsingException(pe.msg)
+        raise MachineParsingException(pe.msg)
     except AssertionError as ae:
         print(ae)
-        raise RoboMachineParsingException(ae)
+        raise MachineParsingException(ae)
