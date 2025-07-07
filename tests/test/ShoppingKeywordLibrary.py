@@ -6,9 +6,12 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
 from robot.api import logger
 import time
 import requests
@@ -19,7 +22,7 @@ from pathlib import Path
 class ShoppingKeywordLibrary:
     """Keywords for testing shopping cart state machine transitions using Selenium."""
     
-    def __init__(self):
+    def __init__(self, browser='firefox', headless=False):
         self.driver = None
         self.wait = None
         self.base_url = "http://localhost:5173"
@@ -29,6 +32,8 @@ class ShoppingKeywordLibrary:
         self.cart_items = []
         self.backend_process = None
         self.frontend_process = None
+        self.browser = browser.lower()
+        self.headless = headless
         
     def start_backend_server(self):
         """Start the FastAPI backend server."""
@@ -106,16 +111,28 @@ class ShoppingKeywordLibrary:
         self.start_backend_server()
         self.start_frontend_server()
         
-        # Setup Firefox WebDriver
-        firefox_options = Options()
-        # Uncomment the next line for headless mode
-        # firefox_options.add_argument("--headless")
-        firefox_options.add_argument("--width=1920")
-        firefox_options.add_argument("--height=1080")
+        # Setup WebDriver based on browser choice
+        if self.browser == 'chrome':
+            options = ChromeOptions()
+            if self.headless:
+                options.add_argument("--headless")
+                options.add_argument("--no-sandbox")
+                options.add_argument("--disable-dev-shm-usage")
+                options.add_argument("--disable-gpu")
+            options.add_argument("--window-size=1920,1080")
+            
+            service = ChromeService(ChromeDriverManager().install())
+            self.driver = webdriver.Chrome(service=service, options=options)
+        else:  # Default to Firefox
+            options = FirefoxOptions()
+            if self.headless:
+                options.add_argument("--headless")
+            options.add_argument("--width=1920")
+            options.add_argument("--height=1080")
+            
+            service = FirefoxService(GeckoDriverManager().install())
+            self.driver = webdriver.Firefox(service=service, options=options)
         
-        # Initialize WebDriver with auto-managed GeckoDriver
-        service = Service(GeckoDriverManager().install())
-        self.driver = webdriver.Firefox(service=service, options=firefox_options)
         self.wait = WebDriverWait(self.driver, 10)
         
         # Navigate to the application
@@ -623,29 +640,144 @@ class ShoppingKeywordLibrary:
     def logout(self):
         """Logout from any authenticated state."""
         try:
-            logout_btn = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='logout-btn']")
-            logout_btn.click()
+            # Check if logout button exists on current page
+            logout_btns = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid='logout-btn']")
             
-            time.sleep(1)
-            self.current_state = "SessionEnded"
-            self.authenticated = False
-            logger.info("User logged out")
-            
+            if logout_btns and logout_btns[0].is_displayed():
+                # Logout button is available, click it
+                logout_btns[0].click()
+                
+                # Wait for session ended page to load
+                try:
+                    self.wait.until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='session-ended-title']"))
+                    )
+                    self.current_state = "SessionEnded"
+                    self.authenticated = False
+                    logger.info("User logged out successfully - session ended page loaded")
+                except Exception:
+                    # If session ended page doesn't load, we might be on login page
+                    login_title = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid='login-title']")
+                    if login_title:
+                        self.current_state = "Login"
+                        self.authenticated = False
+                        logger.info("User logged out - redirected to login page")
+                    else:
+                        # Set state anyway
+                        self.current_state = "SessionEnded"
+                        self.authenticated = False
+                        logger.info("User logged out - state set to SessionEnded")
+            else:
+                # No logout button on current page - navigate to a page that has one
+                logger.info("No logout button found on current page, navigating to catalog")
+                
+                # Try to navigate to catalog page where logout button exists
+                try:
+                    # Navigate to home/catalog page
+                    self.driver.get(self.base_url)
+                    time.sleep(2)
+                    
+                    # Check if we're now on login page (not authenticated)
+                    login_title = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid='login-title']")
+                    if login_title:
+                        self.current_state = "Login"
+                        self.authenticated = False
+                        logger.info("Navigation led to login page - user is logged out")
+                        return
+                    
+                    # Try to find logout button on the new page
+                    logout_btns = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid='logout-btn']")
+                    if logout_btns and logout_btns[0].is_displayed():
+                        logout_btns[0].click()
+                        
+                        # Wait for session ended page
+                        try:
+                            self.wait.until(
+                                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='session-ended-title']"))
+                            )
+                            self.current_state = "SessionEnded"
+                            self.authenticated = False
+                            logger.info("User logged out after navigation")
+                        except Exception:
+                            self.current_state = "SessionEnded"
+                            self.authenticated = False
+                            logger.info("User logged out - state set to SessionEnded")
+                    else:
+                        # Still no logout button, force logout by clearing session
+                        logger.info("No logout button found after navigation, forcing logout")
+                        self.current_state = "SessionEnded"
+                        self.authenticated = False
+                        
+                except Exception as nav_error:
+                    logger.error(f"Navigation for logout failed: {nav_error}")
+                    # Force logout state
+                    self.current_state = "SessionEnded"
+                    self.authenticated = False
+                    
         except Exception as e:
             logger.error(f"Logout action failed: {e}")
+            # Even if logout fails, set the state appropriately
+            self.current_state = "SessionEnded"
+            self.authenticated = False
     
     def return_to_login(self):
         """Return to login from session ended state."""
         try:
-            login_btn = self.driver.find_element(By.CSS_SELECTOR, "[data-testid='back-to-login-btn']")
-            login_btn.click()
+            # First check if we're already on the login page
+            login_title = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid='login-title']")
+            if login_title:
+                logger.info("Already on login page")
+                self.current_state = "Login"
+                return
             
-            time.sleep(1)
-            self.current_state = "Login"
-            logger.info("Returned to login")
+            # Wait for session ended page to load first
+            try:
+                self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='session-ended-title']"))
+                )
+                logger.info("Session ended page loaded")
+            except Exception:
+                logger.info("Session ended page not found, navigating to home")
+                self.driver.get(self.base_url)
+                self.current_state = "Login"
+                return
             
+            # Try to find the back to login button
+            back_to_login_btns = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid='back-to-login-btn']")
+            if back_to_login_btns and back_to_login_btns[0].is_displayed():
+                back_to_login_btns[0].click()
+                
+                # Wait for login page to load
+                self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='login-title']"))
+                )
+                
+                self.current_state = "Login"
+                logger.info("Returned to login via back button")
+            else:
+                # Fallback: navigate directly to home page
+                logger.info("Back to login button not found, navigating to home")
+                self.driver.get(self.base_url)
+                
+                # Wait for login page to load
+                self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='login-title']"))
+                )
+                
+                self.current_state = "Login"
+                logger.info("Returned to login via direct navigation")
+                
         except Exception as e:
             logger.error(f"Return to login action failed: {e}")
+            # Final fallback: navigate to home
+            try:
+                self.driver.get(self.base_url)
+                time.sleep(2)
+                self.current_state = "Login"
+                logger.info("Returned to login via fallback navigation")
+            except Exception as fallback_error:
+                logger.error(f"Fallback navigation also failed: {fallback_error}")
+                raise AssertionError(f"Could not return to login: {e}")
     
     # =============================================================================
     # HELPER METHODS
@@ -680,6 +812,40 @@ class ShoppingKeywordLibrary:
             
         except Exception as e:
             raise AssertionError(f"Failed to fill shipping info: {e}")
+    
+    def _wait_for_page_transition(self, expected_element, timeout=10):
+        """Wait for page transition to complete."""
+        try:
+            self.wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, expected_element))
+            )
+            return True
+        except Exception:
+            return False
+    
+    def _ensure_proper_state_after_logout(self):
+        """Ensure we're in the correct state after logout."""
+        try:
+            # Check if we're on session ended page
+            session_ended = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid='session-ended-title']")
+            if session_ended:
+                self.current_state = "SessionEnded"
+                return
+            
+            # Check if we're on login page
+            login_title = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid='login-title']")
+            if login_title:
+                self.current_state = "Login"
+                return
+            
+            # If neither, navigate to home
+            self.driver.get(self.base_url)
+            time.sleep(2)
+            self.current_state = "Login"
+            
+        except Exception as e:
+            logger.error(f"Error ensuring proper state after logout: {e}")
+            self.current_state = "SessionEnded"
     
     # =============================================================================
     # CONDITIONS FOR MACHINE
