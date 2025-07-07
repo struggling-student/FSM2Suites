@@ -1,13 +1,11 @@
 *** Settings ***
-Library         ShoppingKeywordLibrary.py
+Library         ShoppingKeywordLibrary.py    browser=firefox    headless=True
 Test Setup      Setup Shopping Environment
 Test Teardown   Teardown Shopping Environment
-
 
 *** Variables ***
 ${VALID_EMAIL}      test@example.com
 ${VALID_PASSWORD}   password123
-
 
 *** Test Cases ***
 Test Basic Login Flow
