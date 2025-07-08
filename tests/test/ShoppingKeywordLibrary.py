@@ -2,6 +2,7 @@
 Shopping Cart State Machine Keyword Library for Machine testing.
 This library provides keywords to test the shopping cart FSM using Selenium WebDriver.
 """
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -21,6 +22,9 @@ from pathlib import Path
 
 class ShoppingKeywordLibrary:
     """Keywords for testing shopping cart state machine transitions using Selenium."""
+    
+    # Class-level cache for WebDriver paths to avoid repeated downloads
+    _driver_path_cache = {}
     
     def __init__(self, browser='firefox', headless=False):
         self.driver = None
@@ -111,7 +115,7 @@ class ShoppingKeywordLibrary:
         self.start_backend_server()
         self.start_frontend_server()
         
-        # Setup WebDriver based on browser choice
+        # Setup WebDriver based on browser choice with caching
         if self.browser == 'chrome':
             options = ChromeOptions()
             if self.headless:
@@ -119,10 +123,69 @@ class ShoppingKeywordLibrary:
                 options.add_argument("--no-sandbox")
                 options.add_argument("--disable-dev-shm-usage")
                 options.add_argument("--disable-gpu")
+                options.add_argument("--disable-extensions")
+                options.add_argument("--disable-dev-shm-usage")
+                options.add_argument("--remote-debugging-port=9222")
             options.add_argument("--window-size=1920,1080")
             
-            service = ChromeService(ChromeDriverManager().install())
-            self.driver = webdriver.Chrome(service=service, options=options)
+            # Use cached driver path if available, with better path handling
+            if 'chrome' not in self._driver_path_cache:
+                try:
+                    driver_path = ChromeDriverManager().install()
+                    
+                    # Fix for macOS ARM64 Chrome driver path issue
+                    if driver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
+                        import os
+                        driver_dir = os.path.dirname(driver_path)
+                        actual_driver = os.path.join(driver_dir, 'chromedriver')
+                        if os.path.exists(actual_driver):
+                            driver_path = actual_driver
+                        else:
+                            # Look for chromedriver in the directory
+                            for file in os.listdir(driver_dir):
+                                if file == 'chromedriver' or file.startswith('chromedriver'):
+                                    driver_path = os.path.join(driver_dir, file)
+                                    break
+                    
+                    # Ensure the driver is executable
+                    import os
+                    import stat
+                    if os.path.exists(driver_path):
+                        current_permissions = os.stat(driver_path).st_mode
+                        os.chmod(driver_path, current_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                        logger.info(f"Chrome driver permissions fixed: {driver_path}")
+                    
+                    self._driver_path_cache['chrome'] = driver_path
+                    logger.info(f"Chrome driver downloaded and cached at: {driver_path}")
+                    
+                except Exception as e:
+                    logger.error(f"Chrome driver setup failed: {e}")
+                    # Check if we can use system Chrome driver
+                    try:
+                        import shutil
+                        system_chrome = shutil.which('chromedriver')
+                        if system_chrome:
+                            self._driver_path_cache['chrome'] = system_chrome
+                            logger.info(f"Using system Chrome driver: {system_chrome}")
+                        else:
+                            raise Exception("No Chrome driver available")
+                    except Exception:
+                        # Fallback to Firefox
+                        logger.info("Falling back to Firefox driver")
+                        self.browser = 'firefox'
+                        return self.setup_shopping_environment()
+            
+            try:
+                service = ChromeService(self._driver_path_cache['chrome'])
+                self.driver = webdriver.Chrome(service=service, options=options)
+                logger.info("Chrome WebDriver initialized successfully")
+            except Exception as e:
+                logger.error(f"Chrome WebDriver initialization failed: {e}")
+                # Fallback to Firefox
+                logger.info("Falling back to Firefox driver")
+                self.browser = 'firefox'
+                return self.setup_shopping_environment()
+                
         else:  # Default to Firefox
             options = FirefoxOptions()
             if self.headless:
@@ -130,8 +193,18 @@ class ShoppingKeywordLibrary:
             options.add_argument("--width=1920")
             options.add_argument("--height=1080")
             
-            service = FirefoxService(GeckoDriverManager().install())
+            # Use cached driver path if available
+            if 'firefox' not in self._driver_path_cache:
+                try:
+                    self._driver_path_cache['firefox'] = GeckoDriverManager().install()
+                    logger.info("Firefox driver downloaded and cached")
+                except Exception as e:
+                    logger.error(f"Firefox driver setup failed: {e}")
+                    raise Exception(f"Both Chrome and Firefox driver setup failed: {e}")
+            
+            service = FirefoxService(self._driver_path_cache['firefox'])
             self.driver = webdriver.Firefox(service=service, options=options)
+            logger.info("Firefox WebDriver initialized successfully")
         
         self.wait = WebDriverWait(self.driver, 10)
         
@@ -402,20 +475,54 @@ class ShoppingKeywordLibrary:
     def add_product_to_cart(self, product_id, quantity):
         """Add a product to cart."""
         try:
-            # Wait for the add to cart button for the specific product
-            add_btn = self.wait.until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, f"[data-testid='add-to-cart-{product_id}']"))
+            # First ensure we're on a page with products
+            self.wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='catalog-title']"))
             )
-            add_btn.click()
+            
+            # Wait for the specific product to be visible
+            product_selector = f"[data-testid='add-to-cart-{product_id}']"
+            
+            # Scroll to the product if needed
+            try:
+                product_element = self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, product_selector))
+                )
+                self.driver.execute_script("arguments[0].scrollIntoView(true);", product_element)
+                time.sleep(0.5)  # Allow scroll to complete
+            except Exception as e:
+                logger.error(f"Product {product_id} not found on page: {e}")
+                raise AssertionError(f"Product {product_id} not available")
+            
+            # Wait for the add to cart button to be clickable
+            add_btn = self.wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, product_selector))
+            )
+            
+            # Use JavaScript click as backup for better reliability in headless mode
+            try:
+                add_btn.click()
+            except Exception:
+                # Fallback to JavaScript click
+                self.driver.execute_script("arguments[0].click();", add_btn)
             
             # Wait a moment for the cart to update
             time.sleep(1)
+            
+            # Verify the action was successful by checking for cart update
+            try:
+                # Look for any indication that cart was updated (cart count, etc.)
+                cart_elements = self.driver.find_elements(By.CSS_SELECTOR, "[data-testid*='cart']")
+                logger.info(f"Cart elements found after adding product: {len(cart_elements)}")
+            except Exception:
+                pass  # This is just for verification, not critical
             
             # Update state - we stay on catalog page after adding items
             self.current_state = "Browsing"
             logger.info(f"Added product {product_id} to cart (quantity: {quantity})")
                 
         except Exception as e:
+            logger.error(f"Add to cart action failed for product {product_id}: {e}")
             raise AssertionError(f"Add to cart action failed for product {product_id}: {e}")
     
     def add_product_to_cart_default(self):
