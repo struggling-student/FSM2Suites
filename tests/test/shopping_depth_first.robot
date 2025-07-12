@@ -12,14 +12,14 @@
 #
 # Covered actions (10/17):
 #     add product to cart  (Browsing -> CartEditing)
+#     cancel checkout  (Checkout -> CartEditing)
+#     login with credentials  (Login -> Browsing)
+#     logout  (Checkout -> SessionEnded)
 #     logout  (Browsing -> SessionEnded)
+#     logout  (OrderConfirmed -> SessionEnded)
 #     logout  (CartEditing -> SessionEnded)
 #     proceed to checkout  (CartEditing -> Checkout)
-#     cancel checkout  (Checkout -> CartEditing)
-#     logout  (Checkout -> SessionEnded)
 #     process payment  (Checkout -> OrderConfirmed)
-#     login with credentials  (Login -> Browsing)
-#     logout  (OrderConfirmed -> SessionEnded)
 #     return to login  (SessionEnded -> Login)
 #
 # Uncovered states (2/8):
@@ -27,13 +27,13 @@
 #     PaymentFailed
 #
 # Uncovered actions (7/17):
-#     process payment (Checkout -> PaymentFailed)
-#     login with credentials (Login -> LoginFailed)
-#     exit application (LoginFailed -> SessionEnded)
-#     try login again (LoginFailed -> Login)
 #     cancel order (PaymentFailed -> CartEditing)
+#     exit application (LoginFailed -> SessionEnded)
+#     login with credentials (Login -> LoginFailed)
 #     logout (PaymentFailed -> SessionEnded)
+#     process payment (Checkout -> PaymentFailed)
 #     retry payment (PaymentFailed -> Checkout)
+#     try login again (LoginFailed -> Login)
 #
 # ============================================================================
 
