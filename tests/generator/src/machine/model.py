@@ -188,7 +188,15 @@ class Variable(object):
         return self._resolve_value(self._current_value)
 
     def _resolve_value(self, value):
-        return self.PATTERN.sub(self._resolve_variable, value)
+        # Simple recursion guard to prevent infinite loops
+        if hasattr(self, '_resolving') and self._resolving:
+            return value  # Return the original value if we're already resolving
+        
+        self._resolving = True
+        try:
+            return self.PATTERN.sub(self._resolve_variable, value)
+        finally:
+            self._resolving = False
 
     def _resolve_variable(self, var_match):
         var = self._machine.find_variable_by_name(var_match.group(0))
