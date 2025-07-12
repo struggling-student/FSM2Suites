@@ -1,14 +1,3 @@
-*** Settings ***
-Library         ShoppingKeywordLibrary.py
-Test Setup      Setup Shopping Environment
-Test Teardown   Teardown Shopping Environment
-
-*** Variables ***
-${VALID_EMAIL}        test@example.com
-${VALID_PASSWORD}     password123
-${INVALID_EMAIL}      invalid@example.com
-${INVALID_PASSWORD}   wrongpassword
-
 # ============================================================================
 # TEST COVERAGE INFORMATION
 # ============================================================================
@@ -47,6 +36,17 @@ ${INVALID_PASSWORD}   wrongpassword
 #     retry payment (PaymentFailed -> Checkout)
 #
 # ============================================================================
+
+*** Settings ***
+Library         ShoppingKeywordLibrary.py    browser=chrome    headless=True
+Test Setup      Setup Shopping Environment
+Test Teardown   Teardown Shopping Environment
+
+*** Variables ***
+${VALID_EMAIL}         test@example.com
+${VALID_PASSWORD}      password123
+${INVALID_EMAIL}       invalid@test.com
+${INVALID_PASSWORD}    wrongpassword
 
 *** Test Cases ***
 Test 1
