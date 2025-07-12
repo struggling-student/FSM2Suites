@@ -3,6 +3,7 @@ import { AppProvider, useApp, APP_STATES } from './context/AppContext'
 import Header from './components/Header'
 import ErrorBanner from './components/ErrorBanner'
 import LoginPage from './pages/LoginPage'
+import LoginFailedPage from './pages/LoginFailedPage'
 import ProductCatalogPage from './pages/ProductCatalogPage'
 import CartPage from './pages/CartPage'
 import CheckoutPage from './pages/CheckoutPage'
@@ -18,6 +19,8 @@ function AppContent() {
     switch (currentState) {
       case APP_STATES.LOGIN:
         return <LoginPage />;
+      case APP_STATES.LOGIN_FAILED:
+        return <LoginFailedPage />;
       case APP_STATES.BROWSING:
         return <ProductCatalogPage />;
       case APP_STATES.CART_EDITING:

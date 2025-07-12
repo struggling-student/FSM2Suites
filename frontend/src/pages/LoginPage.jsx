@@ -6,7 +6,7 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { loginSuccess, setError } = useApp();
+  const { loginSuccess, loginFailed } = useApp();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,10 +17,10 @@ function LoginPage() {
       if (result.success) {
         loginSuccess({ email, token: result.token });
       } else {
-        setError(result.message || 'Login failed');
+        loginFailed(result.message || 'Login failed');
       }
     } catch (error) {
-      setError('Network error. Please try again.');
+      loginFailed('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }

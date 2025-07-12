@@ -8,6 +8,7 @@ function CheckoutPage() {
     paymentSuccess, 
     paymentFailed, 
     cancelCheckout,
+    logout,
     setError 
   } = useApp();
   
@@ -157,6 +158,14 @@ function CheckoutPage() {
               disabled={isProcessing}
             >
               Cancel
+            </button>
+            <button
+              className="logout-btn"
+              data-testid="logout-btn"
+              onClick={logout}
+              disabled={isProcessing}
+            >
+              Logout
             </button>
           </div>
           <p className="payment-note">

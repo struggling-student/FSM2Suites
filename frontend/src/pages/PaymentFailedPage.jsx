@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 
 function PaymentFailedPage() {
-  const { startCheckout, cancelCheckout, clearError } = useApp();
+  const { startCheckout, cancelCheckout, logout, clearError } = useApp();
 
   const handleRetryPayment = () => {
     clearError();
@@ -36,6 +36,13 @@ function PaymentFailedPage() {
           onClick={handleCancel}
         >
           Cancel Order
+        </button>
+        <button
+          className="logout-btn"
+          data-testid="logout-btn"
+          onClick={logout}
+        >
+          Logout
         </button>
       </div>
 
