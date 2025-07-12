@@ -1,80 +1,72 @@
-\documentclass[nonacm,sigplan]{acmart}
-\settopmatter{printacmref=false}
-\usepackage{enumitem}
-\usepackage{tabularx}
-\usepackage{xcolor}
+\documentclass[12pt,a4paper,oneside]{article}
+\usepackage{graphicx}
+\usepackage{titlepic}
+\usepackage[utf8]{inputenc}
+\usepackage[left=1.1in,right=1.1in, top=1in, bottom= 1in]{geometry}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{fancyhdr}
 \usepackage{hyperref}
+\usepackage{etoolbox}
+\usepackage[nottoc]{tocbibind}
+\usepackage{appendix}
+\usepackage{multicol}
+\usepackage{leftidx}
+\graphicspath{{figures/}}
+\usepackage{ragged2e}
+\usepackage{mathtools}
+\usepackage{units}
 \usepackage{float}
 \usepackage{subcaption}
-\usepackage{multicol}
-\usepackage{tabularx}
-\usepackage{booktabs}
-\usepackage{multirow}
-\usepackage{array}
-\usepackage{siunitx}
-\usepackage{listings}
-\hypersetup{
-  colorlinks=true,
-  linkcolor=blue,
-  citecolor=red,
-  filecolor=magenta,
-  urlcolor=cyan
-}
-\lstset{basicstyle=\ttfamily\footnotesize, breaklines=true}
-\definecolor{codebg}{gray}{0.97}
-\definecolor{codekw}{rgb}{0.10,0.35,0.70}
-\definecolor{codestr}{rgb}{0.60,0.00,0.00}
-\definecolor{codecom}{rgb}{0.30,0.50,0.30}
+\usepackage{commath}
 
-\lstdefinestyle{pystyle}{
-  language     = Python,
-  basicstyle   = \ttfamily\footnotesize,
-  keywordstyle = \color{codekw}\bfseries,
-  stringstyle  = \color{codestr},
-  commentstyle = \color{codecom}\itshape,
-  showstringspaces = false,
-  breaklines   = true,
-  frame        = single,
-  framerule    = 0pt,
-  rulecolor    = \color{black!15},
-}
+\usepackage{amsthm}
+ 
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\newtheorem{theorem}{Theorem}
+
+\usepackage[none]{hyphenat} % Avoids to go out of margin
+
+\usepackage{subfiles}
+
+% --------------------------------------------- %
+
+\title{From Models to Suites: FSM-Based Robot Test Generator}	                                    % Title
+\author{Lucian Dorin Crainic \\ 1938430}				                % Authors separated by \\
+\date{\today}									    % Date
+
+% Font size of figure smaller than normal size:
+\usepackage{caption}
+\captionsetup[figure]{font=small}
+%\captionsetup[table]{font=small}
+
+%\usepackage{setspace} % double spacing
+\linespread{1.2}
+
+\makeatletter
+\let\thetitle\@title
+\let\theauthor\@author
+\let\thedate\@date
+\makeatother
 
 \begin{document}
-\title[]{MultiModalMan: An Interactive Hangman Game}
 
-\author{Andrea Tarricone}
-\email{tarricone.1888181@studenti.uniroma1.it}
-\affiliation{%
-  \institution{University "La Sapienza"}
-  \city{Rome}
-  \state{Lazio}
-  \country{Italy}
-}
+\include{title}
+\newpage
+\tableofcontents
+\newpage
+% \subfile{chapters/01}
+% \clearpage
+% \subfile{chapters/Development}
+% \clearpage
+% \subfile{chapters/Conclusions}
+% \clearpage
+\bibliographystyle{unsrt}
+\bibliography{ref}
+\nocite{*}  % to include references which were not cited
+%\addcontentsline{toc}{chapter}{references}
 
-\author{Lucian Dorin Crainic}
-\email{crainic.1938430@studenti.uniroma1.it}
-\affiliation{
-  \institution{University "La Sapienza"}
-  \city{Rome}
-  \state{Lazio}
-  \country{Italy}
-}
-
-\begin{abstract}
-\textbf{MultiModalMan} is a reimagining of the classic \textit{hangman game} that lets players guess letters and control the interface by speaking or using hand gestures as well as by typing. The system is built in \textit{Python} around three modules: a state manager that synchronises all inputs, an \textbf{AI agent} for \textit{natural language processing}, and a \textit{Computer Vision pipeline} for \textit{real time gesture recognition}. Users can switch freely between modalities during play, making the game accessible and engaging for a wide audience. The application is implemented using the \textit{Flet} framework, which provides a responsive web interface that runs in any modern browser. This paper describes the architecture, design patterns, and implementation details of the system, highlighting its innovative use of multimodal interaction to enhance user experience.
-\end{abstract}
-
-
-% \begin{teaserfigure}
-%   \includegraphics[width=\textwidth]{./images/architecture_diagram.png}
-%   \caption{High level overview of the MultiModalMan game system showing the flow from user inputs through processing layers to the core application.}
-% \end{teaserfigure}
-
-\maketitle
-\pagestyle{plain}
-
-\input{src/01.tex}
-
-\bibliographystyle{ACM-Reference-Format}
-\bibliography{references}
 \end{document}
