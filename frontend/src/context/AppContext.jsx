@@ -4,6 +4,7 @@ import ApiService from '../services/api';
 // FSM States
 export const APP_STATES = {
   LOGIN: 'Login',
+  LOGIN_FAILED: 'LoginFailed',
   BROWSING: 'Browsing',
   CART_EDITING: 'CartEditing',
   CHECKOUT: 'Checkout',
@@ -26,6 +27,9 @@ const initialState = {
 // Actions
 const ACTIONS = {
   LOGIN_SUCCESS: 'LOGIN_SUCCESS',
+  LOGIN_FAILED: 'LOGIN_FAILED',
+  RETRY_LOGIN: 'RETRY_LOGIN',
+  EXIT_APPLICATION: 'EXIT_APPLICATION',
   LOGOUT: 'LOGOUT',
   SET_PRODUCTS: 'SET_PRODUCTS',
   ADD_TO_CART: 'ADD_TO_CART',
@@ -50,6 +54,27 @@ function appReducer(state, action) {
         currentState: APP_STATES.BROWSING,
         user: action.payload,
         isLoggedIn: true,
+        lastError: null
+      };
+    
+    case ACTIONS.LOGIN_FAILED:
+      return {
+        ...state,
+        currentState: APP_STATES.LOGIN_FAILED,
+        lastError: action.payload || 'Invalid email or password'
+      };
+    
+    case ACTIONS.RETRY_LOGIN:
+      return {
+        ...state,
+        currentState: APP_STATES.LOGIN,
+        lastError: null
+      };
+    
+    case ACTIONS.EXIT_APPLICATION:
+      return {
+        ...state,
+        currentState: APP_STATES.SESSION_ENDED,
         lastError: null
       };
     
@@ -170,6 +195,9 @@ export function AppProvider({ children }) {
 
   const actions = {
     loginSuccess: (user) => dispatch({ type: ACTIONS.LOGIN_SUCCESS, payload: user }),
+    loginFailed: (error) => dispatch({ type: ACTIONS.LOGIN_FAILED, payload: error }),
+    retryLogin: () => dispatch({ type: ACTIONS.RETRY_LOGIN }),
+    exitApplication: () => dispatch({ type: ACTIONS.EXIT_APPLICATION }),
     logout: () => dispatch({ type: ACTIONS.LOGOUT }),
     setProducts: (products) => dispatch({ type: ACTIONS.SET_PRODUCTS, payload: products }),
     addToCart: async (product) => {
