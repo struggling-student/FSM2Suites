@@ -43,7 +43,6 @@ class Generator(object):
             self._write_test('Test {:d}'.format(i), machine, output, test, values)
             i += 1
 
-
     def _write_coverage_comments(self, machine, all_actions, output):
         """Write coverage information as comments at the start of the file"""
         covered_states = self.visited_states
@@ -68,9 +67,16 @@ class Generator(object):
         # Covered actions
         output.write('# Covered actions ({:d}/{:d}):\n'.format(len(covered_actions), len(all_actions)))
         if covered_actions:
-            for action in sorted(covered_actions, key=lambda a: (a._parent_state.name, a.name)):
+            # Group actions by their parent state by searching through machine states
+            for action in sorted(covered_actions, key=lambda a: a.name):
                 action_name = action.name if action.name != '' else '[tau]'
-                output.write('#     {:s}  ({:s} -> {:s})\n'.format(action_name, action._parent_state.name, action.next_state.name))
+                # Find parent state for this action
+                parent_state_name = "Unknown"
+                for state in machine.states:
+                    if action in state._actions:
+                        parent_state_name = state.name
+                        break
+                output.write('#     {:s}  ({:s} -> {:s})\n'.format(action_name, parent_state_name, action.next_state.name if action.next_state else action._next_state_name))
         else:
             output.write('#     -none-\n')
         output.write('#\n')
@@ -85,58 +91,16 @@ class Generator(object):
         # Uncovered actions
         if uncovered_actions:
             output.write('# Uncovered actions ({:d}/{:d}):\n'.format(len(uncovered_actions), len(all_actions)))
-            for action in sorted(uncovered_actions, key=lambda a: (a._parent_state.name, a.name)):
+            # Group actions by their parent state by searching through machine states
+            for action in sorted(uncovered_actions, key=lambda a: a.name):
                 action_name = action.name if action.name != '' else '[tau]'
-                output.write('#     {:s} ({:s} -> {:s})\n'.format(action_name, action._parent_state.name, action.next_state.name))
-            output.write('#\n')
-        
-        output.write('# ' + '=' * 76 + '\n')
-        output.write('\n')
-
-    def _write_coverage_comments(self, machine, all_actions, output):
-        """Write coverage information as comments at the start of the file"""
-        covered_states = self.visited_states
-        covered_actions = self.visited_actions
-        uncovered_states = set(machine.states).difference(self.visited_states)
-        uncovered_actions = all_actions.difference(self.visited_actions)
-        
-        output.write('# ' + '=' * 76 + '\n')
-        output.write('# TEST COVERAGE INFORMATION\n')
-        output.write('# ' + '=' * 76 + '\n')
-        output.write('#\n')
-        
-        # Covered states
-        output.write('# Covered states ({:d}/{:d}):\n'.format(len(covered_states), len(machine.states)))
-        if covered_states:
-            for state in sorted(covered_states, key=lambda s: s.name):
-                output.write('#     {:s}\n'.format(state.name))
-        else:
-            output.write('#     -none-\n')
-        output.write('#\n')
-        
-        # Covered actions
-        output.write('# Covered actions ({:d}/{:d}):\n'.format(len(covered_actions), len(all_actions)))
-        if covered_actions:
-            for action in sorted(covered_actions, key=lambda a: (a._parent_state.name, a.name)):
-                action_name = action.name if action.name != '' else '[tau]'
-                output.write('#     {:s}  ({:s} -> {:s})\n'.format(action_name, action._parent_state.name, action.next_state.name))
-        else:
-            output.write('#     -none-\n')
-        output.write('#\n')
-        
-        # Uncovered states
-        if uncovered_states:
-            output.write('# Uncovered states ({:d}/{:d}):\n'.format(len(uncovered_states), len(machine.states)))
-            for state in sorted(uncovered_states, key=lambda s: s.name):
-                output.write('#     {:s}\n'.format(state.name))
-            output.write('#\n')
-        
-        # Uncovered actions
-        if uncovered_actions:
-            output.write('# Uncovered actions ({:d}/{:d}):\n'.format(len(uncovered_actions), len(all_actions)))
-            for action in sorted(uncovered_actions, key=lambda a: (a._parent_state.name, a.name)):
-                action_name = action.name if action.name != '' else '[tau]'
-                output.write('#     {:s} ({:s} -> {:s})\n'.format(action_name, action._parent_state.name, action.next_state.name))
+                # Find parent state for this action
+                parent_state_name = "Unknown"
+                for state in machine.states:
+                    if action in state._actions:
+                        parent_state_name = state.name
+                        break
+                output.write('#     {:s} ({:s} -> {:s})\n'.format(action_name, parent_state_name, action.next_state.name if action.next_state else action._next_state_name))
             output.write('#\n')
         
         output.write('# ' + '=' * 76 + '\n')
@@ -167,7 +131,6 @@ class Generator(object):
             self._write_tests(machine, max_tests, max_actions, to_state, output, strategy)
             machine.write_keywords_table(output)
 
-
     def transform(self, text, all_actions=None):
         output = StringIO()
         machine = parse(text)
@@ -177,7 +140,6 @@ class Generator(object):
             all_actions = set()
             for state in machine.states:
                 for action in state._actions:
-                    action._parent_state = state
                     all_actions.add(action)
         
         self.generate(machine, output=output, all_actions=all_actions)
