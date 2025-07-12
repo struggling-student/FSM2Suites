@@ -37,12 +37,16 @@ class Machine(object):
         return None
 
     def write_settings_table(self, output):
-        for content in self._settings_table:
-            output.write(content)
+        if self._settings_table:
+            for content in self._settings_table:
+                output.write(content)
+            output.write('\n')  # Add spacing after settings
 
     def write_variables_table(self, output):
-        for content in self._variables_table:
-            output.write(content)
+        if self._variables_table:
+            for content in self._variables_table:
+                output.write(content)
+            output.write('\n')  # Add spacing after variables
 
     def write_keywords_table(self, output):
         for content in self._keywords_table:

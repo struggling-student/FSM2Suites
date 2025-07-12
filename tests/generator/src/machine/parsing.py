@@ -253,9 +253,9 @@ def parse_simple(content):
     variables = []
     states = []
     current_state = None
-    settings_content = ""
-    variables_content = ""
-    keywords_content = ""
+    settings_content = []
+    variables_content = []
+    keywords_content = []
     
     i = 0
     while i < len(lines):
@@ -270,10 +270,12 @@ def parse_simple(content):
         # Section headers
         if stripped_line == '*** Settings ***':
             current_section = 'settings'
+            settings_content.append(line + '\n')
             i += 1
             continue
         elif stripped_line == '*** Variables ***':
             current_section = 'variables'
+            variables_content.append(line + '\n')
             i += 1
             continue
         elif stripped_line == '*** Machine ***':
@@ -282,11 +284,21 @@ def parse_simple(content):
             continue
         elif stripped_line == '*** Keywords ***':
             current_section = 'keywords'
+            keywords_content.append(line + '\n')
             i += 1
             continue
         
         # Parse content based on current section
-        if current_section == 'machine':
+        if current_section == 'settings':
+            # Collect settings content (preserve the line with proper spacing)
+            settings_content.append(line + '\n')
+        elif current_section == 'variables':
+            # Collect variables content (preserve the line with proper spacing)
+            variables_content.append(line + '\n')
+        elif current_section == 'keywords':
+            # Collect keywords content (preserve the line with proper spacing)
+            keywords_content.append(line + '\n')
+        elif current_section == 'machine':
             # Variable definition
             if stripped_line.startswith('${') and 'any of' in stripped_line:
                 var_match = re.match(r'\$\{(\w+)\}\s+any of\s+(.+)', stripped_line)
