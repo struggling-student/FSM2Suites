@@ -63,18 +63,7 @@ def generate_robot_file(strategy_class, output_filename):
         result = output.getvalue()
         
         # Create Robot Framework file with proper header
-        full_content = f"""*** Settings ***
-Library         ShoppingKeywordLibrary.py
-Test Setup      Setup Shopping Environment
-Test Teardown   Teardown Shopping Environment
-
-*** Variables ***
-${{VALID_EMAIL}}        test@example.com
-${{VALID_PASSWORD}}     password123
-${{INVALID_EMAIL}}      invalid@example.com
-${{INVALID_PASSWORD}}   wrongpassword
-
-{result}"""
+        full_content = f"""{result}"""
         
         # Save to file
         output_file = current_dir / output_filename
