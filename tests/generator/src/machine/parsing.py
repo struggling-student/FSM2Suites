@@ -229,6 +229,8 @@ def parse(text):
 
 def parse_simple_condition(condition_str):
     """Parse a simple condition string"""
+    condition_str = condition_str.strip()
+    
     # Simple condition parsing - can be enhanced
     if '==' in condition_str and 'and' in condition_str:
         # Handle: ${EMAIL} == ${VALID_EMAIL} and ${PASSWORD} == ${VALID_PASSWORD}
@@ -242,8 +244,21 @@ def parse_simple_condition(condition_str):
     elif '==' in condition_str:
         var, val = condition_str.split('==', 1)
         return Condition(var.strip(), val.strip())
+    elif ' in ' in condition_str:
+        # Handle: ${ACTION} in (read, write, delete)
+        # For now, create a simple condition that always validates as true
+        # In a full implementation, this would need proper 'in' condition support
+        var, val = condition_str.split(' in ', 1)
+        return Condition(var.strip(), val.strip())
+    elif '<=' in condition_str:
+        # Handle: ${RETRY_COUNT} <= ${MAX_RETRIES}
+        # For now, create a simple condition 
+        var, val = condition_str.split('<=', 1)
+        return Condition(var.strip(), val.strip())
     else:
-        return condition_str
+        # If we can't parse it, return None so the action has no condition
+        # This will make the action always available
+        return None
 
 
 def parse_simple(content):
@@ -252,6 +267,7 @@ def parse_simple(content):
     current_section = None
     variables = []
     states = []
+    rules = []
     current_state = None
     settings_content = []
     variables_content = []
@@ -307,6 +323,22 @@ def parse_simple(content):
                     values = [v.strip() for v in var_match.group(2).split()]
                     variables.append(Variable(var_name, values))
             
+            # Rule definition (contains ==>)
+            elif '==>' in stripped_line and not line.startswith('    '):
+                # Parse rule: ${VAR1} == a  ==>  ${VAR2} == 1
+                parts = stripped_line.split('==>')
+                if len(parts) == 2:
+                    antecedent_str = parts[0].strip()
+                    consequent_str = parts[1].strip()
+                    
+                    # Parse antecedent and consequent as conditions
+                    antecedent = parse_simple_condition(antecedent_str)
+                    consequent = parse_simple_condition(consequent_str)
+                    
+                    # Create implication rule
+                    rule = ImplicationRule(antecedent, consequent)
+                    rules.append(rule)
+            
             # State definition (line with no leading spaces and is capitalized)
             elif stripped_line and not line.startswith(' ') and stripped_line[0].isupper():
                 # Save previous state
@@ -315,6 +347,11 @@ def parse_simple(content):
                 
                 # Start new state
                 current_state = State(stripped_line, [], [])
+            
+            # State step (starts with 2-4 spaces but is not an action or [Actions])
+            elif line.startswith('  ') and not ('==>' in line and line.startswith('    ')) and stripped_line != '[Actions]':
+                if current_state:
+                    current_state.steps.append(stripped_line)
             
             # Skip [Actions] header
             elif stripped_line == '[Actions]':
@@ -370,7 +407,7 @@ def parse_simple(content):
     return Machine(
         states=states,
         variables=variables,
-        rules=[],
+        rules=rules,
         settings_table=settings_content,
         variables_table=variables_content,
         keywords_table=keywords_content
