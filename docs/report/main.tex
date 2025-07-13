@@ -20,6 +20,64 @@
 \usepackage{float}
 \usepackage{subcaption}
 \usepackage{commath}
+% add lstlisting package for code listings
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Define Robot Framework language for syntax highlighting
+\lstdefinelanguage{RobotFramework}{
+    keywords={*** Settings ***, *** Variables ***, *** Test Cases ***, *** Keywords ***, Library, Resource, Variables, Test Setup, Test Teardown, Suite Setup, Suite Teardown, Tags, Documentation, Timeout, Open Browser, Close Browser, Input Text, Click Button, Click Element, Page Should Contain, Page Should Contain Element, Wait Until Element Is Visible, Should Be Equal, Should Contain, Log},
+    keywordstyle=\color{blue}\bfseries,
+    string=[s]{"}{"},
+    stringstyle=\color{red},
+    comment=[l]{\#},
+    commentstyle=\color{gray}\itshape,
+    morestring=[b]',
+    morestring=[b]",
+    sensitive=false,
+    showstringspaces=false,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    frame=single,
+    frameround=tttt,
+    rulecolor=\color{black!30},
+    backgroundcolor=\color{gray!5},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    xleftmargin=0.5cm,
+    xrightmargin=0.5cm,
+    columns=flexible,
+    keepspaces=true
+}
+
+% Set default lstlisting style for Robot Framework
+\lstset{
+    language=RobotFramework,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    breakatwhitespace=true,
+    showstringspaces=false,
+    frame=single,
+    frameround=tttt,
+    rulecolor=\color{black!30},
+    backgroundcolor=\color{gray!5},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    xleftmargin=0.5cm,
+    xrightmargin=0.5cm,
+    columns=flexible,
+    keepspaces=true,
+    captionpos=b
+}
+
+% add booktabs package for better table formatting
+\usepackage{booktabs}
 
 \usepackage{amsthm}
  
@@ -78,9 +136,10 @@
 \subfile{chapters/06}
 \clearpage
 
-% \bibliographystyle{unsrt}
-% \bibliography{ref}
-% \nocite{*}  % to include references which were not cited
-% %\addcontentsline{toc}{chapter}{references}
+% Bibliography setup
+\bibliographystyle{unsrt}
+\bibliography{ref}
+\nocite{*}  % Include uncited references
+\addcontentsline{toc}{section}{References}
 
 \end{document}
