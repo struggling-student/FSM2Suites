@@ -2,9 +2,221 @@
 
 \subsection{High-Level Design}
 
-\subsection{Main data flow}
+The generator under \texttt{tests/generator} follows a modular architecture
+centred on the \texttt{machine} package.  Figure~\ref{fig:generator_arch}
+illustrates the main modules and their relations.  The core classes reside in
+\texttt{src/machine}, which is structured as follows:
+
+\begin{itemize}
+    \item \textbf{model.py} -- defines the object model for state machines.
+    \item \textbf{parsing.py} -- turns a textual ``.machine'' file into the
+          model, providing both a pyparsing grammar and a lightweight line-based
+          parser.
+    \item \textbf{rules.py} -- implements boolean expressions for variable
+          constraints.
+    \item \textbf{strategies.py} and \textbf{allpairsstrategy.py} -- contain the
+          test generation strategies described later.
+    \item \textbf{generator.py} -- orchestrates generation, delegating the path
+          search to a strategy and emitting Robot Framework test cases.
+    \item \textbf{runner.py} -- command line interface used in integration
+          tests.
+    \item \textbf{\_\_init\_\_.py} -- exposes convenience functions
+          \texttt{generate()} and \texttt{transform()} to external callers.
+\end{itemize}
+
+The design separates parsing and model manipulation from the actual generation
+logic.  A \texttt{Machine} instance holds \texttt{State}, \texttt{Action}, and
+\texttt{Variable} objects.  Each component knows how to render itself to Robot
+Framework syntax through methods such as \texttt{write\_to()}.  This model is
+immutable except for variable values, allowing different strategies to reuse the
+same structure.
+
+\texttt{Generator} acts as a façade over the strategy classes.  It maintains
+coverage information while generating tests and outputs the surrounding Robot
+framework tables (settings, variables, keywords).  The generator never embeds
+any particular algorithm; instead it instantiates a strategy via dependency
+injection, exemplifying the Strategy pattern.  Additional strategies therefore
+require no changes to \texttt{Generator} itself.
+
+The CLI defined in \texttt{runner.py} wires the pieces together.  It parses
+command line arguments, chooses a strategy, loads a \texttt{.machine} file with
+\texttt{parse()}, and writes the resulting ``.robot'' file.  Coverage statistics
+are printed and also inserted as comments at the top of the output.
+
+Task automation scripts under \texttt{tasks.py} facilitate testing through
+\texttt{invoke}.  They merely set up the Python path and call the unit test
+suites, leaving generator internals untouched.
+
+Overall the architecture emphasises loose coupling: parsers convert textual
+machines to an in-memory representation, strategies explore that model, and the
+generator class manages formatting and bookkeeping.  The modules remain small
+and can be tested in isolation, simplifying maintenance and extension.
+
+\begin{figure}[ht]
+    \centering
+    % \includegraphics[width=\linewidth]{images/generator_arch.pdf}
+    \caption{Module level architecture of the generator.}
+    \label{fig:generator_arch}
+\end{figure}
+
+\subsection{Main Data Flow}
+
+The life cycle of a machine file begins with the parser.  The
+\texttt{parse()} function in \texttt{parsing.py} accepts the textual contents of
+a model and produces a \texttt{Machine} object.  The parser first attempts a
+line-oriented routine designed specifically for Robot Framework syntax; if that
+fails it falls back to a more permissive \texttt{pyparsing} grammar.  Both
+approaches populate states, variables and rules while preserving the optional
+\texttt{Settings}, \texttt{Variables} and \texttt{Keywords} tables verbatim so
+that they can be copied into the generated output later.
+
+Once parsing succeeds, the resulting machine object is handed to
+\texttt{Generator.generate()}.  Generation proceeds in several phases shown in
+Figure~\ref{fig:data_flow}.  First the generator selects a strategy class based
+on user input (depth-first, random or all-pairs).  A strategy instance receives
+the machine, a maximum number of actions, and an optional target state.  The
+strategy then yields a sequence of action lists paired with concrete variable
+assignments.
+
+For each returned test, the generator writes a small prologue.  It emits the
+Robot Framework \texttt{Settings} and \texttt{Variables} tables exactly as they
+appeared in the model.  It then begins the \texttt{***~Test~Cases~***} section
+and invokes \_\texttt{write\_test} to materialise a particular sequence of
+actions.  This helper tracks visited states and actions for later coverage
+reporting.  Each action writes itself using the state model to resolve target
+states and variable references; steps defined on states are inserted directly.
+
+After exhausting the strategy iterator or hitting the \texttt{max\_tests} limit,
+the generator appends the \texttt{Keywords} table from the original file.  When
+coverage tracking is enabled, the entire output is first generated to a
+temporary buffer.  The generator computes covered and uncovered states and
+actions, then writes a comment block summarising this information before dumping
+the buffered test content to the final file.  This behaviour ensures that the
+statistics reflect exactly what was produced.
+
+Finally, the CLI prints a concise coverage summary and the path to the produced
+``.robot'' file.  From a user perspective the pipeline therefore consists of
+``parse --\textgreater{} generate --\textgreater{} output'', but internally the
+process carefully enforces rules, variable combinations and optional
+target-state semantics.
+
+\begin{figure}[ht]
+    \centering
+    % \includegraphics[width=\linewidth]{images/data_flow.pdf}
+    \caption{Data flow from model parsing to test case generation and output.}
+    \label{fig:data_flow}
+\end{figure}
 
 \subsection{Strategy Interface and Implementations}
 
-\subsection{Core Implementation highlights}
+The generator decouples path exploration from output formatting through a
+dedicated strategy hierarchy.  Each algorithm inherits from the private
+\texttt{\_Strategy} base class in \texttt{strategies.py}.  The interface is
+minimal: it stores the target \texttt{Machine}, the maximum number of actions
+per test and an optional final state.  Concrete strategies implement a
+\texttt{tests()} method yielding test sequences and variable values.  The base
+class also provides \_\texttt{matching\_to\_state()}, a helper that checks
+whether a generated path ends in the requested state.
+
+\begin{lstlisting}[language=python, caption={Simplified strategy interface}, label={lst:strategy_interface}]
+class _Strategy(object):
+    def __init__(self, machine, max_actions, to_state=None):
+        self._machine = machine
+        self._max_actions = max_actions
+        self._to_state = to_state
+        assert not to_state or self._machine.find_state_by_name(to_state)
+
+    def _matching_to_state(self, test):
+        return not self._to_state or self._to_state == test[-1].next_state.name
+
+    def tests(self):
+        raise NotImplementedError
+\end{lstlisting}
+
+Three concrete strategies accompany the base class:
+
+\paragraph{DepthFirstSearchStrategy} exhaustively enumerates all feasible paths
+up to the action limit.  For each combination of variable values it recursively
+traverses the state graph from the start node.  Paths that violate rule
+constraints are pruned early, and optional target-state filtering ensures only
+relevant tests are yielded.  Because it explores every branch deterministically,
+this strategy delivers complete coverage but may become slow as the state space
+grows.
+
+\paragraph{RandomStrategy} produces tests by making random choices at each step.
+It repeatedly selects random variable assignments that satisfy the machine's
+rules, then walks the state graph with random actions until the maximum length is
+reached.  Paths are trimmed from the end until they match the desired final
+state.  The approach is fast and memory efficient, trading completeness for
+variety.
+
+\paragraph{AllPairsRandomStrategy} extends \texttt{RandomStrategy} but replaces
+the purely random variable choice with a pairwise algorithm from the
+\texttt{allpairspy} library.  For models without rules this drastically reduces
+the number of value combinations while still covering all pairs of parameter
+values.  Because pairwise generation conflicts with complex rule evaluation, the
+constructor explicitly rejects machines that define rules.
+
+Table~\ref{tab:strategy_compare} summarises the main differences.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lccc}
+        \toprule
+        Strategy & Coverage & Determinism & Rule Support \\
+        \midrule
+        DepthFirstSearch & Complete & Yes & Yes \\
+        Random & Variable & No & Yes \\
+        AllPairs-Random & Pairwise vars & Partly & No \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparison of built-in strategies.}
+    \label{tab:strategy_compare}
+\end{table}
+
+\subsection{Core Implementation Highlights}
+
+Several implementation details deserve closer attention.  One is the recursive
+search routine used by \texttt{DepthFirstSearchStrategy}.  It is implemented in
+\texttt{strategies.py} as \_\texttt{generate\_all\_from()}, which yields all
+paths from a given state up to the action limit.  When no actions remain and the
+current state matches the requested target, the function yields an empty list so
+that parent calls produce complete paths.  This recursion enables exhaustive
+search while naturally pruning branches that violate rule constraints.
+
+Another highlight is the generator's ability to annotate output with coverage
+information.  After generation the collected sets of visited states and actions
+are compared to the full model.  The method \texttt{\_write\_coverage\_comments}
+in \texttt{generator.py} formats this data into human readable sections for
+``Covered'' and ``Uncovered'' elements.  A snippet of its implementation is shown
+in Listing~\ref{lst:coverage_comments}.
+
+\begin{lstlisting}[language=python, caption={Coverage comment generation}, label={lst:coverage_comments}]
+def _write_coverage_comments(self, machine, all_actions, output):
+    covered_states = self.visited_states
+    covered_actions = self.visited_actions
+    uncovered_states = set(machine.states) - covered_states
+    uncovered_actions = all_actions - covered_actions
+    output.write('# ' + '=' * 76 + '\n')
+    output.write('# TEST COVERAGE INFORMATION\n')
+    # ... iterate and write details ...
+\end{lstlisting}
+
+Variable substitution within actions demonstrates another subtle piece of code.
+Each \texttt{Action} stores potential arguments that may contain variable
+references (e.g. ``\${USER}'').  When a test case is written, the action resolves
+these references using the current variable mapping from the machine.  This
+resolution is safe from infinite recursion thanks to a small guard in
+\texttt{Variable.\_resolve\_value} that tracks ongoing substitution.
+
+Finally, duplicate test detection ensures deterministic output.  The generator
+keeps a set of previously produced action-value tuples.  If a strategy yields a
+sequence already encountered, the generator skips it and increments a counter.
+This prevents redundant cases when multiple strategies explore overlapping parts
+of the state space.
+
+Together these techniques provide a balance between flexibility and reliability:
+strategies can freely explore the model, the generator records meaningful
+coverage metrics, and the final Robot Framework file faithfully reflects the
+chosen algorithm without duplicates.
 
