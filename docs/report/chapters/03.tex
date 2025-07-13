@@ -1,7 +1,166 @@
 \section{FSM Grammar Specification (.machine)}
 
-\subsection{Design goals}
+\subsection{Design Goals}
 
-\subsection{Complete EBNF grammar}
+The ``.machine`` format defines finite state machines used by the generator in
+\texttt{tests/generator}. Its syntax resembles Robot Framework tables so that
+engineers accustomed to Robot's plain text style can author models with minimal
+training. The grammar is intentionally concise: every section begins with a
+triple-asterisk header (for example ``*** Machine ***``) and relies on consistent
+indentation rather than explicit block markers. This yields readable models and
+ensures that hand-crafted machines can easily be versioned alongside tests.
 
-\subsection{Semantic validation rules}
+A primary goal is to separate variable declarations from state transitions. The
+\texttt{Variables} section enumerates parameter values that may vary across test
+cases. During generation, the engine combines these values with the state model
+to produce different execution paths. Rules placed after the variable block
+constrain valid combinations, preventing unrealistic or contradictory settings.
+
+Within the \texttt{Machine} section each state appears at column~0 and may
+include optional step lines describing actions to execute upon entering the
+state. An \texttt{[Actions]} header introduces transitions triggered by keywords.
+Each action specifies the target state and can include a conditional expression
+using the keyword ``when''. Actions with the label ``otherwise'' act as fallbacks
+when no other condition matches. Arguments may be listed using the ``args``
+keyword so that values are resolved when tests are generated.
+
+The format also supports optional \texttt{Settings} and \texttt{Keywords}
+sections. Content placed in the \texttt{Settings} area is copied verbatim to the
+resulting Robot Framework file, allowing resource imports or test setup steps.
+The \texttt{Keywords} section provides reusable keyword implementations or
+helper functions referenced from the state machine. Because the parser stores the
+entire text of these sections, users retain complete control over the generated
+script without modifying the underlying generator.
+
+Overall, the design emphasises human readability while remaining expressive
+enough for automated processing. By mirroring Robot Framework conventions and
+limiting syntactic noise, the grammar serves as a compact bridge between FSM
+models and executable tests.
+Another goal is to keep the syntax simple enough for domain experts who may not be familiar with Python. Because every statement is plain ASCII, machine files can be edited with standard text editors and reviewed like source code. The format intentionally avoids complex nesting or macros. Instead, extensibility is achieved through keywords that encapsulate reusable sequences of Robot commands. By isolating variable declarations, state descriptions, and reusable keyword implementations, the grammar encourages small, composable models that evolve with the system under test.
+
+In practice, the parser supports both a lightweight and a strict mode. The \texttt{parse\_simple} function reads each line sequentially and tolerates minor formatting variations. If this fast path fails, the more rigorous pyparsing implementation reports the exact line and column of the offending construct. This dual approach balances flexibility for authors with precise diagnostics when errors occur.
+
+\subsection{Complete EBNF Grammar}
+
+The following listing summarises the entire grammar recognised by the parser in
+\texttt{tests/generator/src/machine/parsing.py}. Long rules are wrapped for
+clarity.
+
+\begin{lstlisting}[caption={Full .machine grammar}, label={lst:machine_grammar}]
+machine_file    = settings_section? variables_section? machine_section
+                  keywords_section? ;
+settings_section = "*** Settings ***" newline text* ;
+variables_section= "*** Variables ***" newline variable_def* ;
+variable_def    = variable splitter "any of" splitter value_list newline ;
+variable        = "${" identifier "}" ;
+value_list      = value ( splitter value )* ;
+value           = token ;
+machine_section = "*** Machine ***" newline elements ;
+elements        = ( variable_def | rule | state_def )* ;
+rule            = expression splitter "==>" splitter expression newline ;
+state_def       = state_name newline step* actions? ;
+state_name      = identifier (" " identifier)* ;
+step            = two_spaces text newline ;
+actions         = two_spaces "[Actions]" newline action+ ;
+action          = four_spaces robo_step splitter "==>" splitter state_name
+                  condition? args? newline ;
+condition       = splitter "when" splitter expression
+                  | splitter "otherwise" ;
+args            = splitter "args" splitter value_list ;
+keywords_section= "*** Keywords ***" newline text* ;
+expression      = term ( ("and" | "or") term )* ;
+term            = variable comparison_op value
+                  | "(" expression ")" ;
+comparison_op   = "==" | "!=" | ">" | "<" | ">=" | "<=" | "in" | "~" | "!~" ;
+identifier      = letter ( letter | digit | "_" )* ;
+text            = {any characters other than newline};
+newline         = "\n" | "\r\n" ;
+splitter        = " " + " " ;
+two_spaces      = "  " ;
+four_spaces     = "    " ;
+\end{lstlisting}
+This grammar covers every construct accepted by the parser. A settings section collects arbitrary lines until the next header, enabling direct reuse of Robot Framework directives. Variables follow the pattern \texttt{variable any of value\_list}, where spacing is normalised by the \texttt{splitter} rule so that additional spaces are ignored. The indentation-based \texttt{step} and \texttt{action} productions remove the need for explicit block delimiters: two leading spaces indicate a step executed on entry, while four spaces introduce a transition. Conditions support boolean expressions composed of equality, inequality and comparison operators, as well as regular-expression matches using \texttt{\textasciitilde} and \texttt{!\textasciitilde}.
+
+Tokens such as \texttt{identifier}, \texttt{text}, and \texttt{value} rely on regular expressions defined in the Python implementation. They accept alphanumeric characters and typical punctuation. The grammar remains intentionally compact so that future operators or features can be added with minimal disruption. In practice, the \texttt{parse\_simple} routine tolerates minor variation but ultimately normalises input back to this canonical form before generation.
+
+\begin{figure}[ht]
+    \centering
+    % \includegraphics[width=\linewidth]{images/grammar-overview.pdf}
+    \caption{Overview of sections and their relation within a \texttt{.machine} file.}
+    \label{fig:machine_sections}
+\end{figure}
+
+\subsection{Semantic Validation Rules}
+
+Parsing proceeds in two stages. The function \texttt{parse()} first attempts a
+lightweight line-by-line parser called \texttt{parse\_simple}. Should that fail,
+it falls back to a detailed \texttt{pyparsing} specification. Both approaches
+produce a \texttt{Machine} object composed of \texttt{State}, \texttt{Action},
+and \texttt{Variable} instances. The simple parser explicitly records the
+original text of the \texttt{Settings}, \texttt{Variables}, and \texttt{Keywords}
+sections so that they can be emitted unchanged in the generated test file.
+
+Every \texttt{Action} validates that its target state exists when it is attached
+to a machine. The following excerpt shows the relevant check:
+\begin{lstlisting}[language=python, caption={Action state resolution}, label={lst:action_validation}]
+class Action(object):
+    def set_machine(self, machine):
+        self._machine = machine
+        if not self.next_state:
+            raise AssertionError(
+                f"Invalid end state '{self._next_state_name}' "
+                f"in action '{self.name}'!")
+\end{lstlisting}
+If a transition refers to an undefined state, an exception halts parsing, giving
+immediate feedback about typos or missing states.
+
+Variables may be referenced inside action arguments or conditions. The
+\texttt{Variable} class resolves nested references while guarding against
+recursive substitution:
+\begin{lstlisting}[language=python, caption={Variable resolution logic}, label={lst:variable_resolution}]
+class Variable(object):
+    REGEX = r"\${[_A-Z][_A-Z0-9]*}"
+    PATTERN = re.compile(REGEX)
+    def _resolve_value(self, value):
+        if hasattr(self, '_resolving') and self._resolving:
+            return value
+        self._resolving = True
+        try:
+            return self.PATTERN.sub(self._resolve_variable, value)
+        finally:
+            self._resolving = False
+\end{lstlisting}
+
+Global rules restrict combinations of variable values. Each rule is evaluated via
+its \texttt{is\_valid()} method, and the \texttt{Machine.rules\_are\_ok}
+function only accepts assignments satisfying all rules. During test generation,
+strategies iterate over value sets filtered by this function.
+\begin{lstlisting}[language=python, caption={Rule evaluation pipeline}, label={lst:rules_eval}]
+class Machine(object):
+    def rules_are_ok(self, values):
+        value_mapping = {v.name: value for v, value in zip(self.variables, values)}
+        for rule in self.rules:
+            if not rule.is_valid(value_mapping=value_mapping):
+                return False
+        return True
+\end{lstlisting}
+
+Indentation also carries semantic meaning. States must start at column~0,
+actions at four spaces, and steps at two spaces. The parser warns about tab
+characters and trims trailing whitespace to enforce uniform style. Lines
+beginning with ``\#'' are treated as comments and ignored entirely.
+
+The helper function \texttt{resolve\_whitespace} prints a warning whenever a tab character is detected in the input file. This nudge helps maintain portability across editors that may mix tabs and spaces. After parsing succeeds, variable values are applied only if every rule evaluates to true. The generator also records which states and actions are executed while producing tests. This coverage data is reported as comments at the top of the generated file so that users can quickly see whether any portion of the model remained unexplored.
+
+The overall validation process is summarised in
+Figure~\ref{fig:validation_pipeline}. The parser builds the machine structure,
+checks state references and variable rules, and then hands the validated model to
+the generator, which emits Robot Framework tests.
+
+\begin{figure}[ht]
+    \centering
+    % \includegraphics[width=\linewidth]{images/validation-pipeline.pdf}
+    \caption{Parsing and validation pipeline from text to executable tests.}
+    \label{fig:validation_pipeline}
+\end{figure}
+
