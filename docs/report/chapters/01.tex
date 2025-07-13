@@ -1,7 +1,27 @@
 \section{Introduction}
 
 \subsection{Motivation: Why FSM-based Testing?}
+Finite--state machines (FSMs) offer a concise way to model application behaviour. Each state captures a distinct configuration, while actions encode the events that drive the system.  By representing a workflow as an FSM we can automatically explore and verify the possible transitions.  Automated test generation from models reduces the effort spent writing exhaustive suites by hand and helps highlight unreachable or missing scenarios.
 
 \subsection{Project objective and scope}
+This project provides a prototype test generator that transforms \texttt{.machine} models into Robot Framework test suites.  The generator is implemented in Python and is organised around a parsing layer, a set of state--based data structures and several generation strategies.  The main modules include:
+\begin{itemize}
+  \item \textbf{\texttt{parsing.py}} --- reads the custom grammar and builds objects such as \texttt{Machine}, \texttt{State} and \texttt{Action}.
+  \item \textbf{\texttt{generator.py}} --- walks the model and emits test cases, keeping track of coverage information.
+  \item \textbf{\texttt{strategies.py}} --- contains depth--first, random and pairwise algorithms for exploring the state space.
+\end{itemize}
+To demonstrate the generated tests, a simple shopping web application is provided.  A \texttt{FastAPI} backend (see \texttt{backend/main.py}) exposes endpoints for login, product management and checkout, while a React frontend uses the API to implement an FSM driven user interface.
 
 \subsection{Main contributions}
+The repository delivers a minimal yet complete pipeline from model to executable tests.  Key features are:
+\begin{itemize}
+  \item a human--readable \texttt{.machine} grammar for defining states, actions, variables and rules;
+  \item a parser capable of validating expressions and resolving variable references;
+  \item generation strategies that produce Robot Framework suites with optional coverage comments;
+  \item an example web application with unit tests to showcase integration with real code.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    %\includegraphics[width=0.8\textwidth]{figures/architecture.png}
+    \caption{Overall architecture of the prototype generator.}
+\end{figure}
