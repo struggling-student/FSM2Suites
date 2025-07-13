@@ -55,18 +55,32 @@
 \begin{document}
 
 \include{title}
+% add abstract page 
+\newpage
+\begin{abstract}
+    This document presents the research conducted on FSM-based test generation for robotic systems. The focus is on the methodologies employed, the results obtained, and the implications for future research in automated testing.
+\end{abstract}
+
 \newpage
 \tableofcontents
 \newpage
-% \subfile{chapters/01}
-% \clearpage
-% \subfile{chapters/Development}
-% \clearpage
-% \subfile{chapters/Conclusions}
-% \clearpage
-\bibliographystyle{unsrt}
-\bibliography{ref}
-\nocite{*}  % to include references which were not cited
-%\addcontentsline{toc}{chapter}{references}
+
+\subfile{chapters/01}
+\clearpage
+\subfile{chapters/02}
+\clearpage
+\subfile{chapters/03}
+\clearpage
+\subfile{chapters/04}
+\clearpage
+\subfile{chapters/05}
+\clearpage
+\subfile{chapters/06}
+\clearpage
+
+% \bibliographystyle{unsrt}
+% \bibliography{ref}
+% \nocite{*}  % to include references which were not cited
+% %\addcontentsline{toc}{chapter}{references}
 
 \end{document}
