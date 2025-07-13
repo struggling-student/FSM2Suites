@@ -1,9 +1,158 @@
-\section{Real-project case study}
+\section{Real-Project Case Study}
 
-\subsection{System description}
+\subsection{System Description}
+The demonstration project consists of a minimal shopping application with a
+\textbf{FastAPI}\footnote{Only open-source packages are used.} backend and a
+React front end. The backend exposes REST endpoints for login, logout, browsing
+products, manipulating the cart and carrying out the checkout flow. Each
+endpoint returns JSON and stores session data in memory. A simplified selection
+of products is provided so that the state transitions can be exercised without a
+persistent database. Listing\,\ref{lst:machine_snippet} shows how the business
+flow is encoded in the accompanying \texttt{state.machine} file.
 
-\subsection{Typical workflow in practice}
+The frontend is implemented with React and uses a context provider to maintain
+its finite-state machine (FSM). States such as\texttt{Login},
+\texttt{Browsing},\texttt{CartEditing} and \texttt{Checkout} are enumerated in
+\texttt{AppContext.jsx}. Actions dispatched from UI components cause state
+changes and trigger API calls through a small service layer. Pages in
+\texttt{src/pages} map directly to these FSM states so that the current view is
+always consistent with the application logic.
 
-\subsection{Different test generation results}
+\begin{lstlisting}[caption={Excerpt of shopping state machine}, label={lst:machine_snippet}]
+Login
+  [Actions]
+    login with credentials    ==>  Browsing      when  ${EMAIL} == ${VALID_EMAIL}  and  ${PASSWORD} == ${VALID_PASSWORD}
+    login with credentials    ==>  LoginFailed   otherwise
 
-\subsection{Discussion and future work}
+LoginFailed
+  [Actions]
+    try login again          ==>  Login
+    exit application         ==>  SessionEnded
+
+Browsing
+  [Actions]
+    add product to cart       ==>  CartEditing    args    ${PRODUCT_ID}    ${QUANTITY}
+    logout                    ==>  SessionEnded
+\end{lstlisting}
+
+Figure\,\ref{fig:shopping_fsm} illustrates the overall FSM.
+
+\begin{figure}[ht]
+    \centering
+    % \includegraphics[width=\linewidth]{images/shopping_app_state_machine.png}
+    \caption{State machine driving the shopping application.}
+    \label{fig:shopping_fsm}
+\end{figure}
+
+\subsection{Typical Workflow in Practice}
+An end user begins on the login page where credentials are submitted to
+\texttt{/login}. On success the server issues a session token and the FSM moves
+to the \texttt{Browsing} state. Product data retrieved from \texttt{/products}
+populate the catalogue view. The user may add items to the cart, triggering the
+\texttt{/cart/add} endpoint and a transition to \texttt{CartEditing}. While
+editing the cart, quantities can be adjusted or items removed via
+\texttt{/cart/update} and \texttt{/cart/remove}. Selecting ``Proceed to
+Checkout'' calls \texttt{/checkout/start} and moves the FSM to \texttt{Checkout}.
+
+During checkout a form captures shipping details. Payment is simulated through
+\texttt{/checkout/pay} where success or failure is controlled by a flag. If the
+payment succeeds the next state is \texttt{OrderConfirmed}. The frontend
+displays an order summary along with a newly generated order ID. A payment error
+leads instead to \texttt{PaymentFailed}. In this state the user can retry the
+payment, cancel the order (returning to \texttt{CartEditing}) or logout. The
+session ultimately ends through the \texttt{/logout} endpoint which clears
+server-side data and returns to the initial \texttt{Login} state.
+
+The workflow therefore mirrors the state machine: every API response results in
+a deterministic state change on the client. The small number of states keeps the
+model manageable while still covering typical e-commerce behaviour such as
+cancelled checkouts or invalid login attempts.
+
+\subsection{Different Test Generation Results}
+The \texttt{state.machine} file feeds directly into the generator from
+\texttt{tests/generator}. Three strategies are provided: a
+\textbf{Depth-First Search} (DFS) strategy, a \textbf{Random} strategy and an
+\textbf{All-Pairs} strategy. Each produces Robot Framework suites containing a
+set of parametrised tests. Listing\,\ref{lst:coverage_random} shows the coverage
+section automatically inserted at the top of a generated file.
+
+\begin{lstlisting}[caption={Coverage section in shopping\_random.robot}, label={lst:coverage_random}]
+# ===========================================================================
+# TEST COVERAGE INFORMATION
+# ===========================================================================
+#
+# Covered states (8/8):
+#     Browsing
+#     CartEditing
+#     Checkout
+#     Login
+#     LoginFailed
+#     OrderConfirmed
+#     PaymentFailed
+#     SessionEnded
+#
+# Covered actions (17/17):
+#     add product to cart  (Browsing -> CartEditing)
+#     cancel checkout  (Checkout -> CartEditing)
+#     cancel order  (PaymentFailed -> CartEditing)
+#     exit application  (LoginFailed -> SessionEnded)
+#     login with credentials  (Login -> Browsing)
+#     login with credentials  (Login -> LoginFailed)
+#     logout  (CartEditing -> SessionEnded)
+#     logout  (OrderConfirmed -> SessionEnded)
+#     logout  (Checkout -> SessionEnded)
+#     logout  (Browsing -> SessionEnded)
+#     logout  (PaymentFailed -> SessionEnded)
+#     proceed to checkout  (CartEditing -> Checkout)
+#     process payment  (Checkout -> OrderConfirmed)
+#     process payment  (Checkout -> PaymentFailed)
+#     retry payment  (PaymentFailed -> Checkout)
+#     return to login  (SessionEnded -> Login)
+#     try login again  (LoginFailed -> Login)
+\end{lstlisting}
+
+Table\,\ref{tab:coverage_summary} compares the resulting suites. The random and
+DFS approaches both generate 50 tests but cover different portions of the state
+space. All-Pairs focuses on pairwise combinations of variables and therefore
+produces far fewer cases.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lccc}
+    \toprule
+    Strategy & Tests Generated & State Coverage & Action Coverage \\
+    \midrule
+    Depth-First Search & 50 & 6/8 & 10/17 \\
+    Random & 50 & 8/8 & 17/17 \\
+    All-Pairs & 9 & 7/8 & 12/17 \\
+    \bottomrule
+    \end{tabular}
+    \caption{Comparison of coverage metrics across strategies.}
+    \label{tab:coverage_summary}
+\end{table}
+
+The random strategy achieves complete coverage because it explores a wider range
+of variable assignments. DFS follows deterministic paths and therefore misses
+some error handling states. All-Pairs trades thoroughness for brevity by
+exercising only the combinations necessary to cover each pair of input
+parameters at least once.
+
+\subsection{Discussion and Future Work}
+This small project demonstrates how a concise FSM can drive both the frontend
+logic and the automated tests. Expressing the workflow in a separate
+\texttt{.machine} file keeps the model readable and enables multiple generation
+strategies without rewriting the test logic. While the random strategy yields the
+best coverage, it also introduces redundant paths and longer execution time. DFS
+is predictable but overlooks negative scenarios unless depth limits are raised.
+All-Pairs generates a compact suite, yet it may miss complex interactions beyond
+pairwise combinations.
+
+Future enhancements could incorporate heuristics to prioritise rarely exercised
+transitions or to balance coverage against runtime. The current generator emits
+plain Robot Framework scripts; integrating screenshots or API traces would aid
+debugging. Scaling the approach to larger systems would require grouping states
+into higher-level regions and supporting parameterised submachines. Extending the
+frontend to log state transitions could also help correlate UI behaviour with the
+generated tests. Overall, the case study highlights both the practicality of
+model-based testing and the importance of choosing a generation strategy that
+suits the target system.
