@@ -2,6 +2,205 @@
 
 \subsection{Unit Tests}
 
+The generator project contains an extensive suite of unit tests located in
+\texttt{tests/generator/tests/}. In total \emph{73} tests exercise individual
+modules such as the model classes, rule engine, parsing utilities and test
+strategies.  Model tests validate the behaviour of \texttt{Variable},
+\texttt{State}, \texttt{Action} and \texttt{Machine} objects. They ensure that
+states correctly track actions, variable mappings are applied, and rule checking
+works across different assignments.  Rule tests cover the diverse set of
+condition types provided by the library, including equality, inequality,
+comparison and regular expression operators.  Composite logic such as AND, OR,
+NOT and implication is also checked for correct evaluation.
+
+The parsing module is verified with ten dedicated tests. These construct small
+machine definitions in the Robot Framework style and feed them to the
+\texttt{parse} function. Parsing handles variables, settings, user-defined
+keywords and rule declarations. The following excerpt from
+\texttt{test\_parsing.py} illustrates how conditional actions and rules are
+validated:
+\begin{lstlisting}[language=python]
+machine_text = """*** Machine ***
+${VAR1}  any of  a  b
+${VAR2}  any of  1  2
+
+${VAR1} == a  ==>  ${VAR2} == 1
+
+Start
+  [Actions]
+    action1  ==>  End
+
+End
+"""
+machine = parse(machine_text)
+self.assertEqual(len(machine.rules), 1)
+self.assertTrue(machine.rules_are_ok(["a", "1"]))
+self.assertFalse(machine.rules_are_ok(["a", "2"]))
+\end{lstlisting}
+Each test confirms that the parser not only instantiates the machine correctly
+but also evaluates the resulting rules as expected.
+
+Generation strategies are checked in isolation via fifteen tests. The
+\texttt{DepthFirstSearchStrategy} is validated for deterministic path
+exploration, action limits and optional target states. The
+\texttt{RandomStrategy} is stressed with repeated value generation and random
+walks to ensure variability.  Generator unit tests focus on producing Robot
+Framework output. They confirm coverage tracking, limit handling and elimination
+of duplicate tests.  Together, these unit tests guard each component against
+regressions and provide confidence that the smaller building blocks behave as
+specified.
+
+Several tests purposefully target boundary scenarios. Examples include empty
+machines with no actions, invalid state names and variable identifiers that do
+not match the required regular expression. These checks ensure that the parser
+and model raise appropriate assertions rather than failing silently. The
+\texttt{tasks.py} helper allows running individual modules or a quick subset,
+which facilitates fast regression runs during development. All unit tests rely on
+Python's \texttt{unittest} framework so they can be executed in any environment
+without additional tooling. When combined, these tests exercise nearly every
+public method in the codebase and form the foundation of the project's
+verification effort.
+
 \subsection{Integration Tests}
 
-\subsection{Login FSM example}
+Integration tests combine parsing, strategy execution and output formatting to
+validate end-to-end behaviour.  Nine such tests are defined in
+\texttt{test\_integration.py}.  They construct complete machine definitions,
+parse them into model objects and invoke the generator with different strategies
+and configuration options.  The resulting Robot Framework text is inspected for
+correct structure, coverage annotations and valid keyword sections.
+
+A representative example is the \texttt{test\_parse\_and\_generate\_simple\_machine}
+case.  It builds a small machine containing settings and variables, parses it and
+runs the generator while tracking which states and actions were visited.  The
+snippet below shows the verification of the produced output:
+\begin{lstlisting}[language=python]
+all_actions = set()
+for state in machine.states:
+    all_actions.update(state._actions)
+
+generator.generate(
+    machine,
+    max_tests=10,
+    max_actions=3,
+    output=output,
+    strategy=DepthFirstSearchStrategy,
+    all_actions=all_actions
+)
+content = output.getvalue()
+self.assertIn("*** Settings ***", content)
+self.assertIn("TEST COVERAGE INFORMATION", content)
+\end{lstlisting}
+The test ensures that the pipeline from textual specification to final Robot
+Framework file executes without error and that coverage data is embedded in the
+output. Coverage counters for states and actions are asserted to appear at the
+top of the generated file so that developers can see exactly which parts of the
+machine were exercised.
+
+Integration tests are executed using Python's \texttt{unittest} discovery or via
+the \texttt{invoke test} helper, mirroring the commands developers would run in
+practice. One test is marked as skipped when an infinite-state loop might cause a
+recursion error, documenting a known limitation while keeping the rest of the
+suite stable.
+
+Other integration tests handle more complex scenarios: generating from a machine
+with extensive rules, performing random exploration, limiting tests to those that
+reach a given target state and running the convenience function
+\texttt{transform}. One test even creates temporary files to emulate command-line
+usage. These tests confirm that the system works reliably as a whole and can
+handle larger inputs without excessive runtime.
+
+Several scenarios also probe error handling. One integration test feeds the
+generator a machine whose rules cannot all be satisfied, verifying that test
+generation still completes gracefully. Another constructs a large state machine
+containing many variables and branches to observe performance and memory
+consumption under stress. The suite further checks the \texttt{transform}
+helper, which offers a single-call interface from raw text to Robot Framework
+output. Collectively these tests mimic realistic workflows and corner cases,
+ensuring that the generator performs as expected when integrated with file-based
+tools and larger specifications.
+
+\begin{figure}[ht]
+    \centering
+    % \includegraphics[width=\linewidth]{images/test_architecture.pdf}
+    \caption{High-level architecture of the integration tests.}
+    \label{fig:test_architecture}
+\end{figure}
+
+\subsection{Login FSM Example}
+
+The directory \texttt{tests/generator/example/} provides a complete login state
+machine and the Robot Framework tests generated by each strategy.  The machine is
+specified in the following \texttt{.machine} format:
+\begin{lstlisting}[language=text, caption={Login FSM defined in .machine format}, label={lst:login_machine}]
+state idle initial {
+    on login -> auth {
+        action enter_credentials
+    }
+}
+
+state auth {
+    on success -> dashboard
+    on failure -> idle
+}
+
+state dashboard {
+    on logout -> idle
+}
+\end{lstlisting}
+When processed by the generator, three strategies yield markedly different test
+suites.  \textbf{Depth-first search} generates long, deterministic sequences that
+systematically explore branches until the maximum action limit is reached.  The
+produced file contains 51 test cases and only covers three of six states because
+paths never trigger the failure branch.  An excerpt of the coverage section is
+shown below:
+\begin{lstlisting}[language=text]
+# TEST COVERAGE INFORMATION
+# Covered states (3/6):
+#     Authenticated
+#     Start
+#     Success
+# Uncovered actions (7/12):
+#     perform action (Authenticated -> Error)
+#     restart system (End -> Start)
+#     retry authentication (Failed -> Start)
+\end{lstlisting}
+
+\textbf{Random generation} executes the same machine using randomly selected
+values and actions.  Because of the stochastic exploration, all six states and
+all twelve actions are eventually observed.  The resulting Robot Framework file
+still contains 51 tests but shows full coverage, as indicated by the first lines
+of the generated output:
+\begin{lstlisting}[language=text]
+# TEST COVERAGE INFORMATION
+# Covered states (6/6):
+#     Authenticated
+#     End
+#     Error
+#     Failed
+#     Start
+#     Success
+# Covered actions (12/12):
+#     logout  (Authenticated -> Start)
+#     perform action  (Authenticated -> Error)
+#     ...
+\end{lstlisting}
+
+Finally, the \textbf{all-pairs} strategy focuses on variable interactions. It
+creates only four compact tests that pairwise cover all combinations of user and
+action variables. Despite the small number of cases, the coverage report shows
+that every state and action appears at least once. This approach balances test
+count with behavioural variety and is well suited for regression suites.
+
+\begin{figure}[ht]
+    \centering
+    % \includegraphics[width=\linewidth]{images/login_fsm_diagram.pdf}
+    \caption{Structure of the Login FSM and comparison of strategy outputs.}
+    \label{fig:login_fsm}
+\end{figure}
+
+Overall, the example demonstrates how the generator supports different testing
+approaches. Depth-first yields exhaustive paths but may miss unreachable states,
+random exploration improves coverage through variability, and all-pairs efficiently
+covers variable interactions with few tests. The included outputs serve as a
+reference for expected formats and highlight the trade-offs between strategies.
