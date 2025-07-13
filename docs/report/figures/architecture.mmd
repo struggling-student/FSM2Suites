@@ -1,0 +1,47 @@
+flowchart TD
+    %% Input Layer
+    MF[".machine File<br/>State Machine Definition"]
+    
+    %% Parsing Layer
+    P["Parser<br/>(parsing.py)"]
+    M["State Machine Model<br/>(model.py)"]
+    
+    %% Generation Layer
+    G["Test Generator<br/>(generator.py)"]
+    
+    %% Strategy Layer
+    subgraph Strategies["Test Generation Strategies"]
+        DFS["Depth First Search<br/>(strategies.py)"]
+        AP["All Pairs<br/>(allpairsstrategy.py)"]
+        R["Random<br/>(strategies.py)"]
+    end
+    
+    %% Output Layer
+    RF[".robot Files<br/>Robot Framework Tests"]
+    
+    %% Rules and Validation
+    Rules["Rules Engine<br/>(rules.py)"]
+    
+    %% Flow connections
+    MF --> P
+    P --> M
+    M --> G
+    G --> Strategies
+    Rules --> G
+    M --> Rules
+    DFS --> RF
+    AP --> RF
+    R --> RF
+    
+    %% Styling
+    classDef inputFile fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef processing fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef generation fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef output fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef strategy fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    
+    class MF inputFile
+    class P,M,Rules processing
+    class G generation
+    class RF output
+    class DFS,AP,R strategy
