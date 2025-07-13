@@ -1,9 +1,170 @@
 \section{Background and Related Work}
 
-\subsection{Finite-State Machines (FSMs) for test generation}
+\subsection{Finite-State Machines (FSMs) for Test Generation}
+Finite-state machines (FSMs) describe software behavior as a collection of states
+and the transitions that connect them. Each transition is triggered by an input
+and may produce an output, making FSMs well suited for modelling reactive
+systems\cite{Hopcroft2001}. Test generation from an FSM typically begins with a
+formal specification that enumerates all possible states of the system under
+consideration. From this specification, automated tools derive sequences of
+inputs that traverse the state space. The resulting test cases explore
+systematic paths through the model and help uncover defects that manifest only
+after a particular series of events.
 
-\subsection{Robot Framework essentials}
+Early research established a direct link between FSM models and systematic test
+coverage. Chow\cite{Chow1978} introduced the W-method to generate tests that
+exercise every transition of a minimal deterministic machine. Subsequent work
+extended these concepts to non-deterministic and partially specified models. A
+common pattern among these methods is to treat the FSM as a graph and search for
+paths that satisfy specific coverage goals. For instance, breadth-first search
+can be used to create a test suite that visits every state at least once, while
+more advanced techniques may incorporate heuristics for minimising the number of
+steps.
 
-\subsection{Coverage criteria (state, transition, action)}
+Figure~\ref{fig:fsm_example} illustrates a small FSM representing a user login
+workflow. The model identifies valid credentials, incorrect attempts, and the
+lockout state after successive failures. Although the diagram is simplistic, it
+highlights how model-based tests can capture user interactions with strict
+control over the order of events. Complex systems typically contain many more
+states, and exhaustive enumeration quickly becomes impractical. Therefore,
+researchers have proposed abstraction and compositional reasoning to keep the
+models tractable. Such approaches allow testers to focus on critical regions of
+the state space without enumerating every permutation.
 
-\subsection{Comparable tools and approaches}
+\begin{figure}[ht]
+    \centering
+    % \includegraphics[width=\linewidth]{images/fsm_example.pdf}
+    \caption{Example finite-state machine representing a simplified login
+    process.}
+    \label{fig:fsm_example}
+\end{figure}
+
+In modern development workflows, FSM-based test generation forms the backbone of
+many model-based testing (MBT) tools. These tools integrate with continuous
+integration pipelines to execute automatically derived tests whenever the model
+or system under test changes. Despite progress in automation, practitioners must
+still craft models carefully to balance completeness and maintainability. The
+remainder of this chapter discusses how FSMs integrate with the Robot Framework
+and how various coverage criteria ensure the generated tests provide meaningful
+assurance.
+
+\subsection{Robot Framework Essentials}
+The Robot Framework is an open-source automation platform designed for acceptance
+and end-to-end testing. Tests in Robot Framework are written in a tabular
+syntax, which emphasises readability and encourages collaboration between
+developers and nontechnical stakeholders\cite{robotframework}. At the core of
+Robot Framework is a keyword-driven approach, where keywords represent high-level
+actions or verifications. Built-in and external libraries provide keywords for
+interacting with web browsers, databases, application interfaces, and more.
+
+Robot Framework test suites follow a consistent structure consisting of settings,
+variables, test cases, and optional keywords. Settings declare resources such as
+libraries, resource files, and metadata. Variables simplify parameterisation by
+making values reusable across the suite. The test cases themselves describe a
+series of keywords executed in order. By defining custom keywords, teams can
+encapsulate complex actions and create a domain-specific language tailored to
+their application.
+
+Listing~\ref{lst:simple_login} shows a minimal Robot Framework test that
+verifies a successful login. The script opens a browser, enters credentials, and
+checks for a welcoming element on the resulting page. The example uses the
+SeleniumLibrary, one of the most widely adopted libraries for web testing. While
+simple, the listing demonstrates how a few lines in Robot syntax orchestrate a
+complete test scenario.
+
+\begin{lstlisting}[language=robot, caption={Simple login test in Robot Framework}, label={lst:simple_login}]
+*** Settings ***
+Library           SeleniumLibrary
+
+*** Test Cases ***
+Valid Login
+    Open Browser    ${LOGIN_URL}    chrome
+    Input Text      id=username      demo
+    Input Text      id=password      secret
+    Click Button    id=login
+    Page Should Contain Element    css=.welcome
+    [Teardown]      Close Browser
+\end{lstlisting}
+
+Robot Framework supports a rich ecosystem of plugins and tools. Tags can be used
+for selective execution, and listeners provide hooks for custom reporting. The
+framework integrates with continuous integration servers and allows tests to be
+written in plain text, reStructuredText, or Markdown formats. Because of its
+extensibility, Robot Framework is an ideal host environment for model-based test
+generation, where models can be translated into high-level keywords that map
+directly to system interactions.
+
+\subsection{Coverage Criteria (State, Transition, Action)}
+Coverage metrics help quantify how thoroughly a set of test cases exercises the
+model of a system. For FSM-based approaches, three fundamental criteria are
+commonly considered: state coverage, transition coverage, and action coverage.
+State coverage requires every reachable state in the model to appear in at least
+one test case. Achieving full state coverage ensures the test suite observes the
+system in all of its documented configurations, though it does not guarantee
+that every change of state is exercised.
+
+Transition coverage goes a step further by insisting that each directed edge in
+the FSM be executed by some test. This criterion verifies that the system under
+investigation handles all allowable inputs at every decision point. Various
+algorithms exist to derive a minimal set of paths that collectively cover every
+transition\cite{Binder1999}. In practice, complete transition coverage may be
+unreachable for complex or nondeterministic systems, so engineers often focus on
+critical subsets of transitions.
+
+Action coverage pertains to the operations or outputs associated with
+transitions. An action might correspond to a method invocation, a message sent
+on a queue, or an update to persistent state. Action coverage requires that each
+unique action defined in the FSM is observed during execution. This criterion is
+useful when transitions share common labels or when additional side effects need
+verification beyond state changes. Some tools track action coverage by instrumenting
+the test harness or by parsing logs to associate actions with model elements.
+
+Existing versions of this project provide basic state and transition tracking,
+but finer-grained action coverage is earmarked for future work. Integrating
+coverage tooling directly into the Robot Framework environment will allow
+continuous measurement as tests execute, providing immediate feedback on which
+parts of the model remain untested.
+
+\subsection{Comparable Tools and Approaches}
+Multiple model-based testing tools employ FSMs or related formalisms to generate
+test cases. GraphWalker is an open-source tool that interprets models described
+in a graph notation and executes random or guided walks to produce test
+sequences\cite{GraphWalker}. It integrates with Java and allows assertions to be
+placed on edges or vertices. Modbat is another approach, offering a Scala-based
+environment for modelling probabilistic automata\cite{Modbat}. Modbat can
+express complex concurrency scenarios and uses randomised exploration combined
+with user-defined assertions.
+
+Tcases focuses on input space modelling rather than explicit state machines. It
+employs combinatorial techniques to derive minimal test sets that cover
+interactions among input parameters\cite{Tcases}. Although Tcases does not rely
+on an FSM, it shares the goal of systematic coverage and can complement
+state-based approaches. Other tools, such as QuickCheck and its derivatives,
+utilise property-based testing to generate large numbers of input sequences that
+satisfy high-level properties.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{l l l}
+    \toprule
+    Tool & Model Type & Notable Feature \\
+    \midrule
+    GraphWalker & Graph-based FSM & Guided and random traversals \\
+    Modbat & Probabilistic automata & Concurrency support \\
+    Tcases & Input parameter model & Combinatorial coverage \\
+    QuickCheck & Property specifications & Randomised test data \\
+    \bottomrule
+    \end{tabular}
+    \caption{Representative tools for model-based test generation.}
+    \label{tab:tool_comparison}
+\end{table}
+
+Compared with these tools, the present project emphasises ease of integration
+with the Robot Framework and straightforward model specification. While
+GraphWalker and Modbat target Java or Scala environments, our approach focuses
+on Python-based tooling and the readable syntax favoured by Robot Framework
+users. Tcases and QuickCheck address different kinds of models, yet they share
+complementary goals of systematic exploration. The methodology outlined in this
+work seeks to combine the accessibility of Robot Framework with the thoroughness
+of MBT techniques. The following chapter introduces the concrete design and
+implementation choices made to realise this integration.
