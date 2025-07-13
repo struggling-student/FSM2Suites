@@ -18,7 +18,7 @@ changes and trigger API calls through a small service layer. Pages in
 \texttt{src/pages} map directly to these FSM states so that the current view is
 always consistent with the application logic.
 
-\begin{lstlisting}[language=text, caption={Excerpt of shopping state machine}, label={lst:machine_snippet}]
+\begin{lstlisting}[caption={Excerpt of shopping state machine}, label={lst:machine_snippet}]
 Login
   [Actions]
     login with credentials    ==>  Browsing      when  ${EMAIL} == ${VALID_EMAIL}  and  ${PASSWORD} == ${VALID_PASSWORD}
@@ -76,7 +76,7 @@ The \texttt{state.machine} file feeds directly into the generator from
 set of parametrised tests. Listing\,\ref{lst:coverage_random} shows the coverage
 section automatically inserted at the top of a generated file.
 
-\begin{lstlisting}[language=robot, caption={Coverage section in shopping\_random.robot}, label={lst:coverage_random}]
+\begin{lstlisting}[caption={Coverage section in shopping\_random.robot}, label={lst:coverage_random}]
 # ===========================================================================
 # TEST COVERAGE INFORMATION
 # ===========================================================================
