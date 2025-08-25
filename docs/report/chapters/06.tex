@@ -39,7 +39,7 @@ Figure\,\ref{fig:shopping_fsm} illustrates the overall FSM.
 
 \begin{figure}[ht]
     \centering
-    % \includegraphics[width=\linewidth]{images/shopping_app_state_machine.png}
+    \includegraphics[width=\linewidth]{shopping-fsm.png}
     \caption{State machine driving the shopping application.}
     \label{fig:shopping_fsm}
 \end{figure}
@@ -73,62 +73,90 @@ The \texttt{state.machine} file feeds directly into the generator from
 \texttt{tests/generator}. Three strategies are provided: a
 \textbf{Depth-First Search} (DFS) strategy, a \textbf{Random} strategy and an
 \textbf{All-Pairs} strategy. Each produces Robot Framework suites containing a
-set of parametrised tests. Listing\,\ref{lst:coverage_random} shows the coverage
-section automatically inserted at the top of a generated file.
+set of parametrised tests with coverage information automatically inserted at
+the top of each generated file.
 
-\begin{lstlisting}[caption={Coverage section in shopping\_random.robot}, label={lst:coverage_random}]
-# ===========================================================================
-# TEST COVERAGE INFORMATION
-# ===========================================================================
-#
-# Covered states (8/8):
-#     Browsing
-#     CartEditing
-#     Checkout
-#     Login
-#     LoginFailed
-#     OrderConfirmed
-#     PaymentFailed
-#     SessionEnded
-#
-# Covered actions (17/17):
-#     add product to cart  (Browsing -> CartEditing)
-#     cancel checkout  (Checkout -> CartEditing)
-#     cancel order  (PaymentFailed -> CartEditing)
-#     exit application  (LoginFailed -> SessionEnded)
-#     login with credentials  (Login -> Browsing)
-#     login with credentials  (Login -> LoginFailed)
-#     logout  (CartEditing -> SessionEnded)
-#     logout  (OrderConfirmed -> SessionEnded)
-#     logout  (Checkout -> SessionEnded)
-#     logout  (Browsing -> SessionEnded)
-#     logout  (PaymentFailed -> SessionEnded)
-#     proceed to checkout  (CartEditing -> Checkout)
-#     process payment  (Checkout -> OrderConfirmed)
-#     process payment  (Checkout -> PaymentFailed)
-#     retry payment  (PaymentFailed -> Checkout)
-#     return to login  (SessionEnded -> Login)
-#     try login again  (LoginFailed -> Login)
-\end{lstlisting}
-
-Table\,\ref{tab:coverage_summary} compares the resulting suites. The random and
-DFS approaches both generate 50 tests but cover different portions of the state
-space. All-Pairs focuses on pairwise combinations of variables and therefore
-produces far fewer cases.
+Table~\ref{tab:shopping_coverage_summary} compares the resulting test suites,
+showing how different strategies achieve varying levels of coverage with
+different numbers of test cases.
 
 \begin{table}[ht]
-    \centering
-    \begin{tabular}{lccc}
-    \toprule
-    Strategy & Tests Generated & State Coverage & Action Coverage \\
-    \midrule
-    Depth-First Search & 50 & 6/8 & 10/17 \\
-    Random & 50 & 8/8 & 17/17 \\
-    All-Pairs & 9 & 7/8 & 12/17 \\
-    \bottomrule
-    \end{tabular}
-    \caption{Comparison of coverage metrics across strategies.}
-    \label{tab:coverage_summary}
+\centering
+\caption{Comparison of test generation strategies for the shopping application}
+\label{tab:shopping_coverage_summary}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Strategy} & \textbf{Test Cases} & \textbf{States Covered} & \textbf{Actions Covered} \\
+\hline
+Depth-First & 52 & 6/8 (75\%) & 10/17 (59\%) \\
+\hline
+Random & 52 & 8/8 (100\%) & 17/17 (100\%) \\
+\hline
+All-Pairs & 11 & 7/8 (88\%) & 12/17 (71\%) \\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:shopping_detailed_coverage} provides detailed breakdown of which
+specific states and actions are covered by each strategy in the shopping
+application.
+
+\begin{table}[ht]
+\centering
+\caption{Detailed coverage breakdown for shopping application strategies}
+\label{tab:shopping_detailed_coverage}
+\small
+\begin{tabular}{|l|p{8cm}|p{3cm}|}
+\hline
+\textbf{Strategy} & \textbf{Covered States} & \textbf{Uncovered States} \\
+\hline
+Depth-First & 
+\begin{tabular}[c]{@{}l@{}}
+Browsing, CartEditing, \\
+Checkout, Login, \\
+OrderConfirmed, SessionEnded
+\end{tabular} & LoginFailed, PaymentFailed \\
+\hline
+Random & All states (8/8) & None \\
+\hline
+All-Pairs & 
+\begin{tabular}[c]{@{}l@{}}
+Browsing, CartEditing, Checkout, \\
+Login, LoginFailed, \\
+OrderConfirmed, SessionEnded
+\end{tabular} & PaymentFailed \\
+\hline
+\end{tabular}
+
+\vspace{0.5cm}
+
+\begin{tabular}{|l|p{9cm}|p{3cm}|}
+\hline
+\textbf{Strategy} & \textbf{Key Uncovered Actions} & \textbf{Missing Scenarios} \\
+\hline
+Depth-First & 
+\begin{tabular}[c]{@{}l@{}}
+• login with credentials (Login $\to$ LoginFailed) \\
+• process payment (Checkout $\to$ PaymentFailed) \\
+• cancel order (PaymentFailed $\to$ CartEditing) \\
+• retry payment (PaymentFailed $\to$ Checkout)
+\end{tabular} & 
+\begin{tabular}[c]{@{}c@{}}
+Login failures \\
+Payment failures
+\end{tabular} \\
+\hline
+Random & None (full coverage) & None \\
+\hline
+All-Pairs & 
+\begin{tabular}[c]{@{}l@{}}
+• process payment (Checkout $\to$ PaymentFailed) \\
+• cancel order (PaymentFailed $\to$ CartEditing) \\
+• retry payment (PaymentFailed $\to$ Checkout) \\
+• logout (PaymentFailed $\to$ SessionEnded)
+\end{tabular} & Payment failures \\
+\hline
+\end{tabular}
 \end{table}
 
 The random strategy achieves complete coverage because it explores a wider range
