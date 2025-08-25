@@ -1,0 +1,118 @@
+classDiagram
+    %% Core Model Classes
+    class Machine {
+        +find_state_by_name(name) State
+        +find_variable_by_name(name) Variable
+        +rules_are_ok(values) bool
+        +apply_variable_values(values)
+    }
+
+    class State {
+        +string name
+        +list~Action~ actions
+        +set_machine(machine)
+        +write_to(output)
+    }
+
+    class Action {
+        +string name
+        +State next_state
+        +is_available() bool
+        +write_to(output)
+    }
+
+    class Variable {
+        +string name
+        +list~string~ values
+        +string current_value
+        +set_current_value(value)
+    }
+
+    %% Rule Interface
+    class Rule {
+        <<interface>>
+        +is_valid(value_mapping) bool
+    }
+
+    %% Key Rule Implementations
+    class Condition {
+        +is_valid(value_mapping) bool
+    }
+
+    class EquivalenceRule {
+        +is_valid(value_mapping) bool
+    }
+
+    class ImplicationRule {
+        +is_valid(value_mapping) bool
+    }
+
+    %% Strategy Pattern
+    class Strategy {
+        <<abstract>>
+        +tests() Iterator
+    }
+
+    class DepthFirstSearchStrategy {
+        +tests() Iterator
+    }
+
+    class RandomStrategy {
+        +tests() Iterator
+    }
+
+    class AllPairsRandomStrategy {
+        +tests() Iterator
+    }
+
+    %% Generator and Parser
+    class Generator {
+        +generate()
+    }
+
+    class Parser {
+        <<utility>>
+        +parse(text) Machine
+    }
+
+    %% Core Relationships
+    Machine "1" *-- "*" State
+    Machine "1" *-- "*" Variable  
+    Machine "1" *-- "*" Rule
+    State "1" *-- "*" Action
+    Action --> State
+
+    %% Inheritance Hierarchies
+    Rule <|-- Condition
+    Rule <|-- EquivalenceRule
+    Rule <|-- ImplicationRule
+    Strategy <|-- DepthFirstSearchStrategy
+    Strategy <|-- RandomStrategy
+    RandomStrategy <|-- AllPairsRandomStrategy
+
+    %% Usage Dependencies
+    Generator --> Strategy
+    Generator --> Machine
+    Parser --> Machine
+    Strategy --> Machine
+
+    %% Styling
+    classDef coreModel fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef ruleClass fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef strategyClass fill:#fff8e1,stroke:#f57c00,stroke-width:2px
+    classDef utilityClass fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+
+    class Machine:::coreModel
+    class State:::coreModel
+    class Action:::coreModel
+    class Variable:::coreModel
+    class Rule:::ruleClass
+    class Condition:::ruleClass
+    class EquivalenceRule:::ruleClass
+    class ImplicationRule:::ruleClass
+    class Strategy:::strategyClass
+    class DepthFirstSearchStrategy:::strategyClass
+    class RandomStrategy:::strategyClass
+    class AllPairsRandomStrategy:::strategyClass
+    class Generator:::utilityClass
+    class Parser:::utilityClass

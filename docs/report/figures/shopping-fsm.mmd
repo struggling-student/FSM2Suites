@@ -1,0 +1,47 @@
+---
+title: Shopping Application State Machine
+---
+stateDiagram-v2
+    direction TB
+    
+    classDef errorState fill:#ffebee,stroke:#c62828,color:#000
+    classDef successState fill:#e8f5e8,stroke:#2e7d32,color:#000
+    classDef normalState fill:#e3f2fd,stroke:#1976d2,color:#000
+    classDef endState fill:#fafafa,stroke:#616161,color:#000
+    
+    [*] --> Login
+    
+    Login --> Browsing : login with credentials\n[valid email & password]
+    Login --> LoginFailed : login with credentials\n[invalid credentials]
+    
+    LoginFailed --> Login : try login again
+    LoginFailed --> SessionEnded : exit application
+    
+    Browsing --> CartEditing : add product to cart\n[product_id, quantity]
+    Browsing --> SessionEnded : logout
+    
+    CartEditing --> Checkout : proceed to checkout
+    CartEditing --> SessionEnded : logout
+    
+    Checkout --> OrderConfirmed : process payment\n[payment=success]
+    Checkout --> PaymentFailed : process payment\n[payment=failure]
+    Checkout --> CartEditing : cancel checkout
+    Checkout --> SessionEnded : logout
+    
+    OrderConfirmed --> SessionEnded : logout
+    
+    PaymentFailed --> Checkout : retry payment
+    PaymentFailed --> CartEditing : cancel order
+    PaymentFailed --> SessionEnded : logout
+    
+    SessionEnded --> Login : return to login
+    SessionEnded --> [*]
+    
+    class Login normalState
+    class Browsing normalState
+    class CartEditing normalState
+    class Checkout normalState
+    class LoginFailed errorState
+    class PaymentFailed errorState
+    class OrderConfirmed successState
+    class SessionEnded endState
