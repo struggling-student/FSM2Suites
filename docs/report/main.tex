@@ -20,84 +20,75 @@
 \usepackage{float}
 \usepackage{subcaption}
 \usepackage{commath}
-% add lstlisting package for code listings
 \usepackage{listings}
 \usepackage{xcolor}
-
-% Define Robot Framework language for syntax highlighting
+\definecolor{lightgray}{RGB}{150,150,150}
+\definecolor{sectioncolor}{RGB}{120,120,120}
 \lstdefinelanguage{RobotFramework}{
-    keywords={*** Settings ***, *** Variables ***, *** Test Cases ***, *** Keywords ***, Library, Resource, Variables, Test Setup, Test Teardown, Suite Setup, Suite Teardown, Tags, Documentation, Timeout, Open Browser, Close Browser, Input Text, Click Button, Click Element, Page Should Contain, Page Should Contain Element, Wait Until Element Is Visible, Should Be Equal, Should Contain, Log},
-    keywordstyle=\color{blue}\bfseries,
-    string=[s]{"}{"},
-    stringstyle=\color{red},
-    comment=[l]{\#},
-    commentstyle=\color{gray}\itshape,
-    morestring=[b]',
-    morestring=[b]",
-    sensitive=false,
-    showstringspaces=false,
-    basicstyle=\ttfamily\small,
-    breaklines=true,
-    breakatwhitespace=true,
-    tabsize=4,
-    frame=none,
-    backgroundcolor=\color{white},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    stepnumber=1,
-    numbersep=5pt,
-    xleftmargin=0.5cm,
-    xrightmargin=0.5cm,
-    columns=flexible,
-    keepspaces=true
+  keywords=[1]{*** Settings ***, *** Variables ***, *** Test Cases ***, *** Keywords ***},
+  keywords=[2]{Library, Resource, Variables, Tags, Documentation, Timeout, Setup, Teardown, Test Setup, Test Teardown, Suite Setup, Suite Teardown},
+  morekeywords=[3]{Input, Text, Click, Button, Element, Page, Should, Contain, Open, Browser, Close, Wait, Until, Visible, Be, Equal, Log, Empty, Not},
+  keywordstyle=[1]\color{sectioncolor}\bfseries,
+  keywordstyle=[2]\color{blue}\bfseries,
+  keywordstyle=[3]\color{teal}\bfseries,
+  string=[s]{"}{"},
+  stringstyle=\color{red},
+  comment=[l]{\#},
+  commentstyle=\color{gray}\itshape,
+  morestring=[b]',
+  morestring=[b]",
+  sensitive=false,
+  showstringspaces=false,
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=4,
+  frame=none,
+  backgroundcolor=\color{white},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=5pt,
+  xleftmargin=0.5cm,
+  xrightmargin=0.5cm,
+  columns=flexible,
+  keepspaces=true
 }
-
-% Set default lstlisting style for Robot Framework
 \lstset{
-    language=RobotFramework,
-    basicstyle=\ttfamily\small,
-    breaklines=true,
-    breakatwhitespace=true,
-    showstringspaces=false,
-    frame=none,
-    backgroundcolor=\color{white},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    stepnumber=1,
-    numbersep=5pt,
-    xleftmargin=0.5cm,
-    xrightmargin=0.5cm,
-    columns=flexible,
-    keepspaces=true,
-    captionpos=b
+  language=RobotFramework,
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  breakatwhitespace=true,
+  showstringspaces=false,
+  frame=none,
+  backgroundcolor=\color{white},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=5pt,
+  xleftmargin=0.5cm,
+  xrightmargin=0.5cm,
+  columns=flexible,
+  keepspaces=true,
+  captionpos=b
 }
-
-% add booktabs package for better table formatting
 \usepackage{booktabs}
-
 \usepackage{amsthm}
- 
+
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
 
 \newtheorem{theorem}{Theorem}
 
-\usepackage[none]{hyphenat} % Avoids to go out of margin
-
+\usepackage[none]{hyphenat} 
 \usepackage{subfiles}
 
-% --------------------------------------------- %
+\title{From Models to Suites: FSM Based Robot Test Generator}                                      
+\author{Lucian Dorin Crainic \\ 1938430}                        
+\date{\today}                      
 
-\title{From Models to Suites: FSM-Based Robot Test Generator}	                                    % Title
-\author{Lucian Dorin Crainic \\ 1938430}				                % Authors separated by \\
-\date{\today}									    % Date
-
-% Font size of figure smaller than normal size:
 \usepackage{caption}
 \captionsetup[figure]{font=small}
-%\captionsetup[table]{font=small}
-
-%\usepackage{setspace} % double spacing
 \linespread{1.2}
 
 \makeatletter
@@ -109,10 +100,9 @@
 \begin{document}
 
 \include{title}
-% add abstract page 
 \newpage
 \begin{abstract}
-    This document presents the research conducted on FSM-based test generation for robotic systems. The focus is on the methodologies employed, the results obtained, and the implications for future research in automated testing.
+    % TODO: write the abstract at the end when the report is finished.
 \end{abstract}
 
 \newpage
@@ -132,10 +122,9 @@
 \subfile{chapters/06}
 \clearpage
 
-% Bibliography setup
 \bibliographystyle{unsrt}
 \bibliography{ref}
-\nocite{*}  % Include uncited references
+\nocite{*}  
 \addcontentsline{toc}{section}{References}
 
 \end{document}
