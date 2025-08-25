@@ -38,15 +38,13 @@ limiting syntactic noise, the grammar serves as a compact bridge between FSM
 models and executable tests.
 Another goal is to keep the syntax simple enough for domain experts who may not be familiar with Python. Because every statement is plain ASCII, machine files can be edited with standard text editors and reviewed like source code. The format intentionally avoids complex nesting or macros. Instead, extensibility is achieved through keywords that encapsulate reusable sequences of Robot commands. By isolating variable declarations, state descriptions, and reusable keyword implementations, the grammar encourages small, composable models that evolve with the system under test.
 
-In practice, the parser supports both a lightweight and a strict mode. The \texttt{parse\_simple} function reads each line sequentially and tolerates minor formatting variations. If this fast path fails, the more rigorous pyparsing implementation reports the exact line and column of the offending construct. This dual approach balances flexibility for authors with precise diagnostics when errors occur.
-
 \subsection{Complete EBNF Grammar}
 
 The following listing summarises the entire grammar recognised by the parser in
 \texttt{tests/generator/src/machine/parsing.py}. Long rules are wrapped for
 clarity.
 
-\begin{lstlisting}[caption={Full .machine grammar}, label={lst:machine_grammar}]
+\begin{lstlisting}[language=,caption={Full .machine grammar}, label={lst:machine_grammar}]
 machine_file    = settings_section? variables_section? machine_section
                   keywords_section? ;
 settings_section = "*** Settings ***" newline text* ;
@@ -81,14 +79,41 @@ four_spaces     = "    " ;
 \end{lstlisting}
 This grammar covers every construct accepted by the parser. A settings section collects arbitrary lines until the next header, enabling direct reuse of Robot Framework directives. Variables follow the pattern \texttt{variable any of value\_list}, where spacing is normalised by the \texttt{splitter} rule so that additional spaces are ignored. The indentation-based \texttt{step} and \texttt{action} productions remove the need for explicit block delimiters: two leading spaces indicate a step executed on entry, while four spaces introduce a transition. Conditions support boolean expressions composed of equality, inequality and comparison operators, as well as regular-expression matches using \texttt{\textasciitilde} and \texttt{!\textasciitilde}.
 
-Tokens such as \texttt{identifier}, \texttt{text}, and \texttt{value} rely on regular expressions defined in the Python implementation. They accept alphanumeric characters and typical punctuation. The grammar remains intentionally compact so that future operators or features can be added with minimal disruption. In practice, the \texttt{parse\_simple} routine tolerates minor variation but ultimately normalises input back to this canonical form before generation.
+Tokens such as \texttt{identifier}, \texttt{text}, and \texttt{value} rely on regular expressions defined in the Python implementation. They accept alphanumeric characters and typical punctuation. The grammar remains intentionally compact so that future operators or features can be added with minimal disruption. 
 
-\begin{figure}[ht]
-    \centering
-    % \includegraphics[width=\linewidth]{images/grammar-overview.pdf}
-    \caption{Overview of sections and their relation within a \texttt{.machine} file.}
-    \label{fig:machine_sections}
-\end{figure}
+\begin{lstlisting}[language=, caption={Simple example of a .machine file}, label={lst:machine_example}]
+*** Settings ***
+Resource    keywords.robot
+
+*** Variables ***
+${USERNAME}    any of    admin    user    guest
+${PASSWORD}    any of    correct    wrong
+
+*** Machine ***
+${USERNAME} == "admin" ==> ${PASSWORD} == "correct"
+
+Login Page
+  Open Browser    ${URL}    chrome
+  [Actions]
+    Enter Credentials ==> Logged In    when ${PASSWORD} == "correct"
+    Enter Credentials ==> Login Failed    otherwise
+
+Logged In
+  Verify Welcome Message
+  [Actions]
+    Logout ==> Login Page
+
+Login Failed
+  Verify Error Message
+  [Actions]
+    Try Again ==> Login Page
+
+*** Keywords ***
+Enter Credentials
+    Input Text    username    ${USERNAME}
+    Input Text    password    ${PASSWORD}
+    Click Button    login
+\end{lstlisting}
 
 \subsection{Semantic Validation Rules}
 
@@ -101,7 +126,7 @@ original text of the \texttt{Settings}, \texttt{Variables}, and \texttt{Keywords
 sections so that they can be emitted unchanged in the generated test file.
 
 Every \texttt{Action} validates that its target state exists when it is attached
-to a machine. The following excerpt shows the relevant check:
+to a machine. The following code snippet demonstrates this validation:
 \begin{lstlisting}[language=python, caption={Action state resolution}, label={lst:action_validation}]
 class Action(object):
     def set_machine(self, machine):
@@ -135,6 +160,9 @@ Global rules restrict combinations of variable values. Each rule is evaluated vi
 its \texttt{is\_valid()} method, and the \texttt{Machine.rules\_are\_ok}
 function only accepts assignments satisfying all rules. During test generation,
 strategies iterate over value sets filtered by this function.
+
+\newpage
+
 \begin{lstlisting}[language=python, caption={Rule evaluation pipeline}, label={lst:rules_eval}]
 class Machine(object):
     def rules_are_ok(self, values):
@@ -151,16 +179,3 @@ characters and trims trailing whitespace to enforce uniform style. Lines
 beginning with ``\#'' are treated as comments and ignored entirely.
 
 The helper function \texttt{resolve\_whitespace} prints a warning whenever a tab character is detected in the input file. This nudge helps maintain portability across editors that may mix tabs and spaces. After parsing succeeds, variable values are applied only if every rule evaluates to true. The generator also records which states and actions are executed while producing tests. This coverage data is reported as comments at the top of the generated file so that users can quickly see whether any portion of the model remained unexplored.
-
-The overall validation process is summarised in
-Figure~\ref{fig:validation_pipeline}. The parser builds the machine structure,
-checks state references and variable rules, and then hands the validated model to
-the generator, which emits Robot Framework tests.
-
-\begin{figure}[ht]
-    \centering
-    % \includegraphics[width=\linewidth]{images/validation-pipeline.pdf}
-    \caption{Parsing and validation pipeline from text to executable tests.}
-    \label{fig:validation_pipeline}
-\end{figure}
-

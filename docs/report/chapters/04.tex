@@ -8,20 +8,18 @@ illustrates the main modules and their relations.  The core classes reside in
 \texttt{src/machine}, which is structured as follows:
 
 \begin{itemize}
-    \item \textbf{model.py} -- defines the object model for state machines.
-    \item \textbf{parsing.py} -- turns a textual ``.machine'' file into the
+    \item \textbf{model.py} : defines the object model for state machines.
+    \item \textbf{parsing.py} : turns a textual ``.machine'' file into the
           model, providing both a pyparsing grammar and a lightweight line-based
           parser.
-    \item \textbf{rules.py} -- implements boolean expressions for variable
+    \item \textbf{rules.py} : implements boolean expressions for variable
           constraints.
-    \item \textbf{strategies.py} and \textbf{allpairsstrategy.py} -- contain the
+    \item \textbf{strategies.py} and \textbf{allpairsstrategy.py} : contain the
           test generation strategies described later.
-    \item \textbf{generator.py} -- orchestrates generation, delegating the path
+    \item \textbf{generator.py} : orchestrates generation, delegating the path
           search to a strategy and emitting Robot Framework test cases.
-    \item \textbf{runner.py} -- command line interface used in integration
-          tests.
-    \item \textbf{\_\_init\_\_.py} -- exposes convenience functions
-          \texttt{generate()} and \texttt{transform()} to external callers.
+    \item \textbf{runner.py} : provides a command line interface for invoking
+          the generator.
 \end{itemize}
 
 The design separates parsing and model manipulation from the actual generation
@@ -31,7 +29,7 @@ Framework syntax through methods such as \texttt{write\_to()}.  This model is
 immutable except for variable values, allowing different strategies to reuse the
 same structure.
 
-\texttt{Generator} acts as a façade over the strategy classes.  It maintains
+\texttt{Generator} acts as a manager over the strategy classes.  It maintains
 coverage information while generating tests and outputs the surrounding Robot
 framework tables (settings, variables, keywords).  The generator never embeds
 any particular algorithm; instead it instantiates a strategy via dependency
@@ -43,10 +41,6 @@ command line arguments, chooses a strategy, loads a \texttt{.machine} file with
 \texttt{parse()}, and writes the resulting ``.robot'' file.  Coverage statistics
 are printed and also inserted as comments at the top of the output.
 
-Task automation scripts under \texttt{tasks.py} facilitate testing through
-\texttt{invoke}.  They merely set up the Python path and call the unit test
-suites, leaving generator internals untouched.
-
 Overall the architecture emphasises loose coupling: parsers convert textual
 machines to an in-memory representation, strategies explore that model, and the
 generator class manages formatting and bookkeeping.  The modules remain small
@@ -54,7 +48,7 @@ and can be tested in isolation, simplifying maintenance and extension.
 
 \begin{figure}[ht]
     \centering
-    % \includegraphics[width=\linewidth]{images/generator_arch.pdf}
+     \includegraphics[width=\linewidth]{machine-class-diagram.png}
     \caption{Module level architecture of the generator.}
     \label{fig:generator_arch}
 \end{figure}
@@ -99,13 +93,6 @@ Finally, the CLI prints a concise coverage summary and the path to the produced
 ``parse --\textgreater{} generate --\textgreater{} output'', but internally the
 process carefully enforces rules, variable combinations and optional
 target-state semantics.
-
-\begin{figure}[ht]
-    \centering
-    % \includegraphics[width=\linewidth]{images/data_flow.pdf}
-    \caption{Data flow from model parsing to test case generation and output.}
-    \label{fig:data_flow}
-\end{figure}
 
 \subsection{Strategy Interface and Implementations}
 
@@ -163,11 +150,11 @@ Table~\ref{tab:strategy_compare} summarises the main differences.
     \centering
     \begin{tabular}{lccc}
         \toprule
-        Strategy & Coverage & Determinism & Rule Support \\
+        \textbf{Strategy} & \textbf{Coverage} & \textbf{Determinism} & \textbf{Rule Support} \\
         \midrule
-        DepthFirstSearch & Complete & Yes & Yes \\
-        Random & Variable & No & Yes \\
-        AllPairs-Random & Pairwise vars & Partly & No \\
+        \texttt{DepthFirstSearch} & Complete & Yes & Yes \\
+        \texttt{Random} & Variable & No & Yes \\
+        \texttt{AllPairs-Random} & Pairwise vars & Partly & No \\
         \bottomrule
     \end{tabular}
     \caption{Comparison of built-in strategies.}
@@ -214,9 +201,3 @@ keeps a set of previously produced action-value tuples.  If a strategy yields a
 sequence already encountered, the generator skips it and increments a counter.
 This prevents redundant cases when multiple strategies explore overlapping parts
 of the state space.
-
-Together these techniques provide a balance between flexibility and reliability:
-strategies can freely explore the model, the generator records meaningful
-coverage metrics, and the final Robot Framework file faithfully reflects the
-chosen algorithm without duplicates.
-
