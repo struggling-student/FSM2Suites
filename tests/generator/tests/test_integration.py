@@ -4,13 +4,14 @@ import os
 import tempfile
 from io import StringIO
 
-# Add the src directory to the path so we can import machine modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Add the parent directory to the path so we can import src as a package
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from machine import generate
-from machine.generator import Generator
-from machine.parsing import parse
-from machine.strategies import DepthFirstSearchStrategy, RandomStrategy
+# Import from src package
+from src import generate
+from src.generator import Generator
+from src.parsing import parse
+from src.strategies import DepthFirstSearchStrategy, RandomStrategy
 
 
 class TestIntegration(unittest.TestCase):

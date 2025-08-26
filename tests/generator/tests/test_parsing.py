@@ -2,12 +2,12 @@ import unittest
 import sys
 import os
 
-# Add the src directory to the path so we can import machine modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Add the parent directory to the path so we can import src as a package
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from machine.parsing import parse
-from machine.model import Machine
-from machine.rules import Condition
+from src.parsing import parse
+from src.model import Machine
+from src.rules import Condition
 
 
 class TestParsing(unittest.TestCase):

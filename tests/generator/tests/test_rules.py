@@ -2,10 +2,10 @@ import unittest
 import sys
 import os
 
-# Add the src directory to the path so we can import machine modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Add the parent directory to the path so we can import src as a package
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from machine.rules import (
+from src.rules import (
     Condition, UnequalCondition, GreaterThanCondition, GreaterThanOrEqualCondition,
     LessThanCondition, LessThanOrEqualCondition, RegexCondition, RegexNegatedCondition,
     AndRule, OrRule, NotRule, EquivalenceRule, ImplicationRule
