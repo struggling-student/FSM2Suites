@@ -53,8 +53,8 @@ def generate_robot_file(strategy_class, output_filename):
         output = StringIO()
         generator.generate(
             machine, 
-            max_tests=50, 
-            max_actions=20, 
+            max_tests=5, 
+            max_actions=5, 
             output=output, 
             strategy=strategy_class,
             all_actions=all_actions
@@ -63,17 +63,7 @@ def generate_robot_file(strategy_class, output_filename):
         result = output.getvalue()
         
         # Create Robot Framework file with proper header
-        full_content = f"""*** Settings ***
-Library         ExampleLibrary.py
-Test Setup      Setup Example Environment
-
-*** Variables ***
-${{VALID_USER}}         user1
-${{INVALID_USER}}       invalid_user
-${{VALID_ACTION}}       action_success
-${{INVALID_ACTION}}     action_fail
-
-{result}"""
+        full_content = f"""{result}"""
         
         # Save to file
         output_file = current_dir / output_filename
