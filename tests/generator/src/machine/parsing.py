@@ -156,7 +156,7 @@ state.setParseAction(lambda p: State(p.state_name, list(p.steps), list(p.actions
 
 machine_header = Literal('*** Machine ***') + end_of_line
 states = state + ZeroOrMore(OneOrMore(LineEnd()) + state)
-states.setParseAction(lambda t: [[t[2 * i] for i in range(int((len(t) + 1) / 2))]])
+states.setParseAction(lambda t: [item for item in t if hasattr(item, 'name')])
 states = states.setResultsName('states')
 variables = ZeroOrMore(variable_definition).setResultsName('variables')
 rules = ZeroOrMore(rule + end_of_line).setResultsName('rules')
@@ -205,12 +205,205 @@ def resolve_whitespace(text):
 
 def parse(text):
     try:
-        return machine.parseString(resolve_whitespace(text), parseAll=True)[0]
+        # Parse machine definition file
+        return parse_machine(text)
     except ParseBaseException as pe:
         print('Parser failed at line {:d}'.format(pe.lineno))
         print(pe.msg)
         print('line: "{:s}"'.format(pe.line))
         raise MachineParsingException(f"Parsing failed: {pe.msg}")
-    except AssertionError as ae:
+    except Exception as ae:
         print(ae)
         raise MachineParsingException(f"Parsing failed: {ae}")
+
+
+def parse_machine(content):
+    """Parse machine definition file with states, variables, rules, and actions"""
+    import re
+    
+    lines = content.strip().split('\n')
+    current_section = None
+    variables = []
+    states = []
+    rules = []
+    current_state = None
+    settings_content = []
+    variables_content = []
+    keywords_content = []
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped_line = line.strip()
+        
+        # Skip empty lines and comments
+        if not stripped_line or stripped_line.startswith('#'):
+            i += 1
+            continue
+        
+        # Section headers
+        if stripped_line == '*** Settings ***':
+            current_section = 'settings'
+            settings_content.append(line + '\n')
+            i += 1
+            continue
+        elif stripped_line == '*** Variables ***':
+            current_section = 'variables'
+            variables_content.append(line + '\n')
+            i += 1
+            continue
+        elif stripped_line == '*** Machine ***':
+            current_section = 'machine'
+            i += 1
+            continue
+        elif stripped_line == '*** Keywords ***':
+            current_section = 'keywords'
+            keywords_content.append(line + '\n')
+            i += 1
+            continue
+        
+        # Parse content based on current section
+        if current_section == 'settings':
+            settings_content.append(line + '\n')
+        elif current_section == 'variables':
+            variables_content.append(line + '\n')
+        elif current_section == 'keywords':
+            keywords_content.append(line + '\n')
+        elif current_section == 'machine':
+            # Variable definition
+            if stripped_line.startswith('${') and 'any of' in stripped_line:
+                var_match = re.match(r'\$\{(\w+)\}\s+any of\s+(.+)', stripped_line)
+                if var_match:
+                    var_name = '${' + var_match.group(1) + '}'
+                    values = [v.strip() for v in var_match.group(2).split()]
+                    variables.append(Variable(var_name, values))
+            
+            # Rule definition (contains ==>)
+            elif '==>' in stripped_line and not line.startswith('    '):
+                # Parse rule definition
+                try:
+                    parsed_rule = rule.parseString(stripped_line)[0]
+                    rules.append(parsed_rule)
+                except Exception:
+                    # Parse as implication rule
+                    parts = stripped_line.split('==>')
+                    if len(parts) == 2:
+                        antecedent_str = parts[0].strip()
+                        consequent_str = parts[1].strip()
+                        
+                        antecedent = parse_condition(antecedent_str)
+                        consequent = parse_condition(consequent_str)
+                        
+                        rule_obj = ImplicationRule(antecedent, consequent)
+                        rules.append(rule_obj)
+            
+            # State definition (line with no leading spaces and is capitalized)
+            elif stripped_line and not line.startswith(' ') and stripped_line[0].isupper():
+                # Save previous state
+                if current_state:
+                    states.append(current_state)
+                
+                # Start new state
+                current_state = State(stripped_line, [], [])
+            
+            # State step (starts with 2-4 spaces but is not an action)
+            elif line.startswith('  ') and not ('==>' in line and line.startswith('    ')) and stripped_line != '[Actions]':
+                if current_state:
+                    current_state.steps.append(stripped_line)
+            
+            # Skip [Actions] header
+            elif stripped_line == '[Actions]':
+                pass
+            
+            # Action definition (starts with 4+ spaces and contains ==>)
+            elif line.startswith('    ') and '==>' in line:
+                if current_state:
+                    # Parse action definition
+                    try:
+                        action_line = line.strip()
+                        # Parse with action grammar
+                        parsed_action = action.parseString('    ' + action_line)[0]
+                        current_state._actions.append(parsed_action)
+                    except Exception:
+                        # Parse action manually
+                        action_line = line.strip()
+                        parts = action_line.split('==>')
+                        if len(parts) == 2:
+                            action_name = parts[0].strip()
+                            target_and_rest = parts[1].strip()
+                            
+                            target = target_and_rest
+                            condition = None
+                            args = []
+                            
+                            # Parse target, condition, and args
+                            if ' when ' in target_and_rest:
+                                target_part, condition_and_args = target_and_rest.split(' when ', 1)
+                                target = target_part.strip()
+                                
+                                if ' args ' in condition_and_args:
+                                    condition_part, args_part = condition_and_args.split(' args ', 1)
+                                    condition = parse_condition(condition_part.strip())
+                                    args = [arg.strip() for arg in args_part.split()]
+                                else:
+                                    condition = parse_condition(condition_and_args.strip())
+                            elif target_and_rest.endswith(' otherwise'):
+                                target = target_and_rest.replace(' otherwise', '').strip()
+                                condition = 'otherwise'
+                            elif ' args ' in target_and_rest:
+                                target_part, args_part = target_and_rest.split(' args ', 1)
+                                target = target_part.strip()
+                                args = [arg.strip() for arg in args_part.split()]
+                            else:
+                                target = target_and_rest.strip()
+                            
+                            action_obj = Action(action_name, target, condition, args)
+                            current_state._actions.append(action_obj)
+        
+        i += 1
+    
+    # Add the last state
+    if current_state:
+        states.append(current_state)
+    
+    return Machine(
+        states=states,
+        variables=variables,
+        rules=rules,
+        settings_table=settings_content,
+        variables_table=variables_content,
+        keywords_table=keywords_content
+    )
+
+
+def parse_condition(condition_str):
+    """Parse a condition string"""
+    if not condition_str:
+        return None
+        
+    try:
+        # Parse with condition grammar
+        return condition_rule.parseString(condition_str)[0]
+    except Exception:
+        # Parse condition manually
+        condition_str = condition_str.strip()
+        
+        if '==' in condition_str and 'and' in condition_str:
+            parts = condition_str.split(' and ')
+            conditions = []
+            for part in parts:
+                if '==' in part:
+                    var, val = part.split('==', 1)
+                    conditions.append(Condition(var.strip(), val.strip()))
+            return AndRule(conditions) if len(conditions) > 1 else conditions[0]
+        elif '==' in condition_str:
+            var, val = condition_str.split('==', 1)
+            return Condition(var.strip(), val.strip())
+        elif ' in ' in condition_str:
+            var, val = condition_str.split(' in ', 1)
+            return Condition(var.strip(), val.strip())
+        elif '<=' in condition_str:
+            var, val = condition_str.split('<=', 1)
+            return Condition(var.strip(), val.strip())
+        else:
+            return None
