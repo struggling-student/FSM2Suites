@@ -84,7 +84,7 @@ def _select_strategy(strategy):
         return DepthFirstSearchStrategy
     if strategy == 'allpairs-random':
         try:
-            from src.machine.allpairsstrategy import AllPairsRandomStrategy
+            from .allpairsstrategy import AllPairsRandomStrategy
             return AllPairsRandomStrategy
         except ImportError:
             print('ERROR! allpairs-random strategy needs the AllPairs module')
