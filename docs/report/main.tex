@@ -7,7 +7,7 @@
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{fancyhdr}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{etoolbox}
 \usepackage[nottoc]{tocbibind}
 \usepackage{appendix}
@@ -102,7 +102,29 @@
 \include{title}
 \newpage
 \begin{abstract}
-    % TODO: write the abstract at the end when the report is finished.
+\justifying
+\hyphenpenalty=1000
+\exhyphenpenalty=1000
+This report presents a practical approach to \textbf{model based UI testing} by
+automatically generating \textbf{Robot Framework} test suites from
+\textit{Finite State Machine} (FSM) models. Motivated by the need for
+systematic, repeatable UI tests that exercise high level application behaviors,
+the work defines a compact FSM representation and a deterministic mapping from
+model elements (states, transitions, actions) to concrete Robot Framework
+test steps and cases. The implementation includes a \texttt{Python}
+generator that supports multiple traversal strategies and configuration
+options, and a lightweight reference web application (an online shopping demo)
+whose UI exposes explicit state indicators and stable test IDs. The backend
+simulates services (including controllable payment outcomes) so the generated
+suites can exercise both success and failure paths. A case study on the
+shopping app shows that the generator produces diverse suites that exercise
+browsing, cart editing, checkout, payment success and failure, and session
+termination paths, enabling repeatable \textbf{negative path testing} and
+uncovering subtle behavioral differences. The report documents model design,
+path generation algorithms, and the mapping to Robot Framework idioms, and
+shows how FSM driven generation reduces manual test authoring while improving
+systematic coverage of user level behaviors. All artifacts are intentionally
+minimal and ready for local execution to support further experimentation.
 \end{abstract}
 
 \newpage
@@ -125,6 +147,5 @@
 \bibliographystyle{unsrt}
 \bibliography{ref}
 \nocite{*}  
-\addcontentsline{toc}{section}{References}
 
 \end{document}
