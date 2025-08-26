@@ -35,7 +35,10 @@ script without modifying the underlying generator.
 Overall, the design emphasises human readability while remaining expressive
 enough for automated processing. By mirroring Robot Framework conventions and
 limiting syntactic noise, the grammar serves as a compact bridge between FSM
-models and executable tests.
+models and executable tests. The implementation uses pyparsing for robust
+grammar-based parsing with flexible whitespace handling and comprehensive
+error reporting.
+
 Another goal is to keep the syntax simple enough for domain experts who may not be familiar with Python. Because every statement is plain ASCII, machine files can be edited with standard text editors and reviewed like source code. The format intentionally avoids complex nesting or macros. Instead, extensibility is achieved through keywords that encapsulate reusable sequences of Robot commands. By isolating variable declarations, state descriptions, and reusable keyword implementations, the grammar encourages small, composable models that evolve with the system under test.
 
 \subsection{Complete EBNF Grammar}
@@ -73,13 +76,33 @@ comparison_op   = "==" | "!=" | ">" | "<" | ">=" | "<=" | "in" | "~" | "!~" ;
 identifier      = letter ( letter | digit | "_" )* ;
 text            = {any characters other than newline};
 newline         = "\n" | "\r\n" ;
-splitter        = " " + " " ;
+splitter        = "  " + ;
 two_spaces      = "  " ;
 four_spaces     = "    " ;
 \end{lstlisting}
-This grammar covers every construct accepted by the parser. A settings section collects arbitrary lines until the next header, enabling direct reuse of Robot Framework directives. Variables follow the pattern \texttt{variable any of value\_list}, where spacing is normalised by the \texttt{splitter} rule so that additional spaces are ignored. The indentation-based \texttt{step} and \texttt{action} productions remove the need for explicit block delimiters: two leading spaces indicate a step executed on entry, while four spaces introduce a transition. Conditions support boolean expressions composed of equality, inequality and comparison operators, as well as regular-expression matches using \texttt{\textasciitilde} and \texttt{!\textasciitilde}.
+This grammar covers every construct accepted by the parser. A settings section
+collects arbitrary lines until the next header, enabling direct reuse of Robot
+Framework directives. Variables follow the pattern \texttt{variable any of value\_list},
+where spacing is normalized by the \texttt{splitter} rule which accepts two or
+more spaces and normalizes them to exactly two spaces. The indentation-based
+\texttt{step} and \texttt{action} productions remove the need for explicit block
+delimiters: two leading spaces indicate a step executed on entry, while four
+spaces introduce a transition. Conditions support boolean expressions composed
+of equality, inequality and comparison operators, as well as regular-expression
+matches using \texttt{\textasciitilde} and \texttt{!\textasciitilde}.
 
-Tokens such as \texttt{identifier}, \texttt{text}, and \texttt{value} rely on regular expressions defined in the Python implementation. They accept alphanumeric characters and typical punctuation. The grammar remains intentionally compact so that future operators or features can be added with minimal disruption. 
+The implementation uses pure pyparsing with deferred validation. After the entire
+machine definition is parsed into objects, the \texttt{Machine.validate()} method
+establishes relationships between actions and states. This approach prevents
+circular dependency issues that can arise when states reference each other during
+construction.
+
+Tokens such as \texttt{identifier}, \texttt{text}, and \texttt{value} rely on
+regular expressions defined in the Python implementation. They accept alphanumeric
+characters and typical punctuation. The grammar remains intentionally compact so
+that future operators or features can be added with minimal disruption. The
+pyparsing implementation provides robust error reporting and flexible whitespace
+handling compared to manual line-by-line parsing approaches. 
 
 \begin{lstlisting}[language=, caption={Simple example of a .machine file}, label={lst:machine_example}]
 *** Settings ***
@@ -117,38 +140,66 @@ Enter Credentials
 
 \subsection{Semantic Validation Rules}
 
-Parsing proceeds in two stages. The function \texttt{parse()} first attempts a
-lightweight line-by-line parser called \texttt{parse\_simple}. Should that fail,
-it falls back to a detailed \texttt{pyparsing} specification. Both approaches
-produce a \texttt{Machine} object composed of \texttt{State}, \texttt{Action},
-and \texttt{Variable} instances. The simple parser explicitly records the
-original text of the \texttt{Settings}, \texttt{Variables}, and \texttt{Keywords}
-sections so that they can be emitted unchanged in the generated test file.
+Parsing uses a pure \texttt{pyparsing} implementation with a deferred validation
+pattern. The function \texttt{parse()} processes the entire machine definition
+using the pyparsing grammar specification, producing a \texttt{Machine} object
+composed of \texttt{State}, \texttt{Action}, and \texttt{Variable} instances.
+The parser explicitly records the original text of the \texttt{Settings},
+\texttt{Variables}, and \texttt{Keywords} sections so that they can be emitted
+unchanged in the generated test file.
 
-Every \texttt{Action} validates that its target state exists when it is attached
-to a machine. The following code snippet demonstrates this validation:
+Machine construction is separated from validation to avoid circular dependency
+issues between states and actions. The \texttt{Machine} constructor defers
+validation until the \texttt{validate()} method is explicitly called. Every
+\texttt{Action} validates that its target state exists when it is attached to a
+machine. The following code snippet demonstrates this validation:
+\begin{lstlisting}[language=python, caption={Machine deferred validation pattern}, label={lst:machine_validation}]
+class Machine(object):
+    def __init__(self, states, variables, rules, settings_table=None,
+                 variables_table=None, keywords_table=None):
+        self.states = states or []
+        self.variables = variables or []
+        self.rules = rules or []
+        # Don't validate immediately - defer to validate() method
+        self._validated = False
+
+    def validate(self):
+        """Validate the machine after all components are parsed"""
+        if self._validated:
+            return
+        
+        for state in self.states:
+            state.set_machine(self)
+        for variable in self.variables:
+            variable.set_machine(self)
+        self._validated = True
+\end{lstlisting}
+If a transition refers to an undefined state, an exception halts validation when
+the machine's \texttt{validate()} method is called, giving immediate feedback
+about typos or missing states:
+
 \begin{lstlisting}[language=python, caption={Action state resolution}, label={lst:action_validation}]
 class Action(object):
     def set_machine(self, machine):
         self._machine = machine
         if not self.next_state:
-            raise AssertionError(
-                f"Invalid end state '{self._next_state_name}' "
-                f"in action '{self.name}'!")
+            raise AssertionError('Invalid end state "{:s}" in '.format(self._next_state_name) +
+                                 'action "{:s}"!'.format(self.name))
 \end{lstlisting}
-If a transition refers to an undefined state, an exception halts parsing, giving
-immediate feedback about typos or missing states.
 
 Variables may be referenced inside action arguments or conditions. The
 \texttt{Variable} class resolves nested references while guarding against
 recursive substitution:
 \begin{lstlisting}[language=python, caption={Variable resolution logic}, label={lst:variable_resolution}]
 class Variable(object):
-    REGEX = r"\${[_A-Z][_A-Z0-9]*}"
+    REGEX = r'\$\{[_A-Z][_A-Z0-9]*\}'
     PATTERN = re.compile(REGEX)
+    
     def _resolve_value(self, value):
+        # Simple recursion guard to prevent infinite loops
         if hasattr(self, '_resolving') and self._resolving:
-            return value
+            return value  # Return the original value if we're already resolving
+        
         self._resolving = True
         try:
             return self.PATTERN.sub(self._resolve_variable, value)
@@ -161,21 +212,35 @@ its \texttt{is\_valid()} method, and the \texttt{Machine.rules\_are\_ok}
 function only accepts assignments satisfying all rules. During test generation,
 strategies iterate over value sets filtered by this function.
 
-\newpage
-
 \begin{lstlisting}[language=python, caption={Rule evaluation pipeline}, label={lst:rules_eval}]
 class Machine(object):
     def rules_are_ok(self, values):
-        value_mapping = {v.name: value for v, value in zip(self.variables, values)}
+        if not self._validated:
+            self.validate()
+        value_mapping = dict((v.name, value) for v, value in zip(self.variables, values))
         for rule in self.rules:
             if not rule.is_valid(value_mapping=value_mapping):
                 return False
         return True
 \end{lstlisting}
 
+\newpage
+
 Indentation also carries semantic meaning. States must start at column~0,
 actions at four spaces, and steps at two spaces. The parser warns about tab
 characters and trims trailing whitespace to enforce uniform style. Lines
 beginning with ``\#'' are treated as comments and ignored entirely.
 
-The helper function \texttt{resolve\_whitespace} prints a warning whenever a tab character is detected in the input file. This nudge helps maintain portability across editors that may mix tabs and spaces. After parsing succeeds, variable values are applied only if every rule evaluates to true. The generator also records which states and actions are executed while producing tests. This coverage data is reported as comments at the top of the generated file so that users can quickly see whether any portion of the model remained unexplored.
+The parsing implementation uses flexible whitespace handling with the
+\texttt{splitter} rule that accepts two or more spaces, normalizing them to
+exactly two spaces. This provides robustness against varying whitespace while
+maintaining consistent formatting. The \texttt{\_resolve\_whitespace} function
+prints a warning whenever a tab character is detected in the input file,
+helping maintain portability across editors that may mix tabs and spaces.
+
+After parsing succeeds, the machine's \texttt{validate()} method must be called
+to establish proper relationships between actions and their target states. Variable
+values are applied only if every rule evaluates to true. The generator also
+records which states and actions are executed while producing tests. This
+coverage data is reported as comments at the top of the generated file so that
+users can quickly see whether any portion of the model remained unexplored.
