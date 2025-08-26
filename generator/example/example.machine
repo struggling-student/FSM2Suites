@@ -1,5 +1,5 @@
 *** Settings ***
-Library         ExampleLibrary.py
+Library         ../ExampleLibrary.py
 Test Setup      Setup Example Environment
 
 *** Variables ***
@@ -44,28 +44,28 @@ End
 
 *** Keywords ***
 Setup Example Environment
-    Print    Setting up example environment
+    Log    Setting up example environment
 
 Authenticate User
-    Print    Authenticating user: ${USER}
+    Log    Authenticating user: ${USER}
 
 Perform Action
-    Print    Performing action: ${ACTION}
+    Log    Performing action: ${ACTION}
 
 Logout
-    Print    User logging out
+    Log    User logging out
 
 Retry Authentication
-    Print    Retrying authentication
+    Log    Retrying authentication
 
 Exit System
-    Print    Exiting system
+    Log    Exiting system
 
 Continue Working
-    Print    Continuing work
+    Log    Continuing work
 
 Retry Action
-    Print    Retrying action
+    Log    Retrying action
 
 Restart System
-    Print    Restarting system
+    Log    Restarting system
