@@ -14,10 +14,10 @@
 #     add product to cart  (Browsing -> CartEditing)
 #     cancel checkout  (Checkout -> CartEditing)
 #     login with credentials  (Login -> Browsing)
-#     logout  (CartEditing -> SessionEnded)
-#     logout  (Checkout -> SessionEnded)
-#     logout  (Browsing -> SessionEnded)
 #     logout  (OrderConfirmed -> SessionEnded)
+#     logout  (CartEditing -> SessionEnded)
+#     logout  (Browsing -> SessionEnded)
+#     logout  (Checkout -> SessionEnded)
 #     proceed to checkout  (CartEditing -> Checkout)
 #     process payment  (Checkout -> OrderConfirmed)
 #     return to login  (SessionEnded -> Login)
@@ -38,7 +38,7 @@
 # ============================================================================
 
 *** Settings ***
-Library         ShoppingKeywordLibrary.py    browser=chrome    headless=True
+Library         ../ShoppingKeywordLibrary.py    browser=chrome    headless=True
 Test Setup      Setup Shopping Environment
 Test Teardown   Teardown Shopping Environment
 
