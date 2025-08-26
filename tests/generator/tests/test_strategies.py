@@ -40,6 +40,8 @@ class TestDepthFirstSearchStrategy(unittest.TestCase):
             [self.var1, self.var2],
             []
         )
+        # Validate the machine to set up relationships
+        self.machine.validate()
 
     def test_strategy_initialization(self):
         """Test strategy initialization"""
@@ -63,6 +65,7 @@ class TestDepthFirstSearchStrategy(unittest.TestCase):
         # Create a simple machine with no variables and no external state references
         simple_state = State("Simple", [], [])
         machine = Machine([simple_state], [], [])
+        machine.validate()  # Validate the machine to set up relationships
         strategy = DepthFirstSearchStrategy(machine, max_actions=1)
         value_sets = list(strategy._variable_value_sets([]))
         self.assertEqual(value_sets, [[]])
@@ -141,6 +144,8 @@ class TestRandomStrategy(unittest.TestCase):
             [self.var1],
             []
         )
+        # Validate the machine to set up relationships
+        self.machine.validate()
 
     def test_strategy_initialization(self):
         """Test strategy initialization"""
@@ -225,6 +230,8 @@ class TestStrategyWithConditions(unittest.TestCase):
             [self.var],
             []
         )
+        # Validate the machine to set up relationships
+        self.machine.validate()
 
     def test_depth_first_with_conditions(self):
         """Test depth-first strategy with conditional actions"""
