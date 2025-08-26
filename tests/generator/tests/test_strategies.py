@@ -5,9 +5,9 @@ import os
 # Add the parent directory to the path so we can import src as a package
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from src.model import Machine, State, Action, Variable
-from src.rules import Condition
-from src.strategies import DepthFirstSearchStrategy, RandomStrategy
+from src.core import Machine, State, Action, Variable
+from src.core import Condition
+from src.generation import DepthFirstSearchStrategy, RandomStrategy
 
 
 class TestDepthFirstSearchStrategy(unittest.TestCase):

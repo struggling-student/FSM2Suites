@@ -9,9 +9,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Import from src package
 from src import generate
-from src.generator import Generator
+from src.generation import Generator
 from src.parsing import parse
-from src.strategies import DepthFirstSearchStrategy, RandomStrategy
+from src.generation import DepthFirstSearchStrategy, RandomStrategy
 
 
 class TestIntegration(unittest.TestCase):

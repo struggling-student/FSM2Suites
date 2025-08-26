@@ -6,8 +6,8 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from src.parsing import parse
-from src.model import Machine
-from src.rules import Condition
+from src.core import Machine
+from src.core import Condition
 
 
 class TestParsing(unittest.TestCase):
