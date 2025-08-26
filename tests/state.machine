@@ -1,5 +1,5 @@
 *** Settings ***
-Library         ShoppingKeywordLibrary.py    browser=chrome    headless=True
+Library         ../ShoppingKeywordLibrary.py    browser=chrome    headless=True
 Test Setup      Setup Shopping Environment
 Test Teardown   Teardown Shopping Environment
 

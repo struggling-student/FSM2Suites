@@ -42,7 +42,7 @@ class ShoppingKeywordLibrary:
     def start_backend_server(self):
         """Start the FastAPI backend server."""
         test_dir = Path(__file__).parent
-        backend_dir = test_dir.parent.parent / "backend"
+        backend_dir = test_dir.parent / "backend"
         
         logger.info("Starting backend server...")
         self.backend_process = subprocess.Popen([
@@ -66,7 +66,7 @@ class ShoppingKeywordLibrary:
     def start_frontend_server(self):
         """Start the React frontend server."""
         test_dir = Path(__file__).parent
-        frontend_dir = test_dir.parent.parent / "frontend"
+        frontend_dir = test_dir.parent / "frontend"
         
         logger.info("Starting frontend server...")
         self.frontend_process = subprocess.Popen([
