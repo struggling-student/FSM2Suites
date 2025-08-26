@@ -144,22 +144,22 @@ satisfy high-level properties.
   \centering
   \begin{tabular}{l l l}
     \toprule
-    \textbf{Tool} & \textbf{Model Type} & \textbf{Notable Feature} \\
+    \textbf{Tool} & \textbf{Model Type} & \textbf{Features} \\
     \midrule
-    \texttt{GraphWalker} & Graph-based FSM & Guided and random traversals \\
+    \texttt{GraphWalker} & Graph based FSM & Guided and random traversals \\
     \texttt{Modbat} & Probabilistic automata & Concurrency support \\
     \texttt{Tcases} & Input parameter model & Combinatorial coverage \\
     \texttt{QuickCheck} & Property specifications & Randomised test data \\
     \bottomrule
   \end{tabular}
-  \caption{Representative tools for model-based test generation.}
+  \caption{Representative tools for model based test generation.}
   \label{tab:tool_comparison}
 \end{table}
 
 Compared with these tools, the present project emphasises ease of integration
 with the Robot Framework and straightforward model specification. While
 GraphWalker and Modbat target Java or Scala environments, our approach focuses
-on Python-based tooling and the readable syntax favoured by Robot Framework
+on Python tooling and the readable syntax favoured by Robot Framework
 users. Tcases and QuickCheck address different kinds of models, yet they share
 complementary goals of systematic exploration. The methodology outlined in this
 work seeks to combine the accessibility of Robot Framework with the thoroughness
