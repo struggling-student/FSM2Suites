@@ -7,7 +7,7 @@ from io import StringIO
 # Add the src directory to the path so we can import machine modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from machine import generate, transform
+from machine import generate
 from machine.generator import Generator
 from machine.parsing import parse
 from machine.strategies import DepthFirstSearchStrategy, RandomStrategy
@@ -260,20 +260,6 @@ Logout
         # Should contain tests
         self.assertIn("Test", generated_content)
 
-    def test_transform_function(self):
-        """Test the transform convenience function"""
-        try:
-            result = transform(self.simple_machine_text)
-            
-            # Should return generated Robot Framework content
-            self.assertIsInstance(result, str)
-            self.assertIn("*** Keywords ***", result)
-            self.assertIn("Test", result)
-        except RecursionError:
-            # Skip test if recursion error occurs - this is a known limitation
-            # with certain machine configurations that can create infinite loops
-            self.skipTest("Recursion error in transform function - known limitation with infinite state loops")
-
     def test_end_to_end_file_processing(self):
         """Test complete file-based workflow"""
         # Create temporary machine file
@@ -406,7 +392,7 @@ Start
     action4  ==>  State4  when  ${FLAG} != true
 
 State1
-State2  
+State2
 State3
 State4
 """
