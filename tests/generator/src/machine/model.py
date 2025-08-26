@@ -11,17 +11,30 @@ class Machine(object):
         self._settings_table = settings_table or []
         self._variables_table = variables_table or []
         self._keywords_table = keywords_table or []
+        # Don't validate immediately - defer to validate() method
+        self._validated = False
+
+    def validate(self):
+        """Validate the machine after all components are parsed"""
+        if self._validated:
+            return
+        
         for state in self.states:
             state.set_machine(self)
         for variable in self.variables:
             variable.set_machine(self)
+        self._validated = True
 
     @property
     def start_state(self):
+        if not self._validated:
+            self.validate()
         return self.states[0]
 
     @property
     def variable_value_mapping(self):
+        if not self._validated:
+            self.validate()
         return dict((v.name, v.current_value) for v in self.variables)
 
     def find_state_by_name(self, name):
@@ -71,6 +84,8 @@ class Machine(object):
         output.write('  Set Machine Variables  {:s}\n'.format('  '.join(values)))
 
     def rules_are_ok(self, values):
+        if not self._validated:
+            self.validate()
         value_mapping = dict((v.name, value) for v, value in zip(self.variables, values))
         for rule in self.rules:
             if not rule.is_valid(value_mapping=value_mapping):
@@ -78,6 +93,8 @@ class Machine(object):
         return True
 
     def apply_variable_values(self, values):
+        if not self._validated:
+            self.validate()
         for variable, value in zip(self.variables, values):
             variable.set_current_value(value)
 
