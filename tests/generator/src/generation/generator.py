@@ -1,5 +1,5 @@
 from io import StringIO
-from .parsing import parse
+from ..parsing.parsing import parse
 from .strategies import DepthFirstSearchStrategy
 
 

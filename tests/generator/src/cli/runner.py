@@ -2,10 +2,10 @@ import os
 import sys
 import argparse
 
-from .parsing import MachineParsingException, parse
-from . import __version__
-from .generator import Generator
-from .strategies import DepthFirstSearchStrategy, RandomStrategy
+from ..parsing import MachineParsingException, parse
+from .. import __version__
+from ..generation import Generator
+from ..generation import DepthFirstSearchStrategy, RandomStrategy
 
 parser = argparse.ArgumentParser(description='Machine {:s} - '.format(__version__) +
                                  'a test data generator for Robot Framework',
@@ -84,7 +84,7 @@ def _select_strategy(strategy):
         return DepthFirstSearchStrategy
     if strategy == 'allpairs-random':
         try:
-            from .allpairsstrategy import AllPairsRandomStrategy
+            from ..generation.allpairsstrategy import AllPairsRandomStrategy
             return AllPairsRandomStrategy
         except ImportError:
             print('ERROR! allpairs-random strategy needs the AllPairs module')

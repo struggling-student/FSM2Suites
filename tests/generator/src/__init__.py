@@ -1,6 +1,6 @@
 from .parsing import parse
-from .generator import Generator
-from .strategies import DepthFirstSearchStrategy
+from .generation import Generator
+from .generation import DepthFirstSearchStrategy
 
 __version__ = "1.0.0"
 __all__ = ['parse', 'Generator', 'DepthFirstSearchStrategy', 'generate', '__version__']

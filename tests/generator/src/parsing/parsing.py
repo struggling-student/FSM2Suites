@@ -8,8 +8,8 @@ from pyparsing import (CharsNotIn, Forward, Literal, LineEnd, Optional,
                        Regex, StringEnd, White, Word, ZeroOrMore,
                        delimitedList, printables,
                        ParseBaseException)
-from .model import Machine, State, Action, Variable
-from .rules import (AndRule, Condition, EquivalenceRule, OrRule,
+from ..core.model import Machine, State, Action, Variable
+from ..core.rules import (AndRule, Condition, EquivalenceRule, OrRule,
                    NotRule, ImplicationRule, UnequalCondition,
                    GreaterThanCondition, GreaterThanOrEqualCondition,
                    LessThanCondition, LessThanOrEqualCondition,
@@ -183,7 +183,7 @@ def _create_machine(p):
 
     rules = [v for v in p if is_rule(v)]
     
-    from .model import State
+    from ..core.model import State
     states = [v for v in p if isinstance(v, State)]
     
     settings_table = p.settings_table if hasattr(p, 'settings_table') and p.settings_table else []
