@@ -12,18 +12,79 @@ from io import StringIO
 
 # Add the generator source to the path
 current_dir = Path(__file__).parent
-generator_dir = current_dir.parent / "generator"
-sys.path.insert(0, str(generator_dir / "src"))
+generator_dir = current_dir.parent / "generator" / "src"
+sys.path.insert(0, str(generator_dir))
 
 # Import after path modification
 try:
-    from machine.parsing import parse
-    from machine.generator import Generator
-    from machine.strategies import DepthFirstSearchStrategy, RandomStrategy
-    from machine.allpairsstrategy import AllPairsRandomStrategy
-except ImportError as e:
+    # Create a module namespace that mimics the generator package structure
+    import types
+    
+    # Create core module namespace
+    core_module = types.ModuleType('core')
+    sys.modules['core'] = core_module
+    
+    # Load rules module
+    with open(generator_dir / "core" / "rules.py", 'r') as f:
+        rules_code = f.read()
+    exec(compile(rules_code, str(generator_dir / "core" / "rules.py"), 'exec'), vars(core_module))
+    
+    # Load model module
+    with open(generator_dir / "core" / "model.py", 'r') as f:
+        model_code = f.read()
+    exec(compile(model_code, str(generator_dir / "core" / "model.py"), 'exec'), vars(core_module))
+    
+    # Create parsing module namespace
+    parsing_module = types.ModuleType('parsing')
+    sys.modules['parsing'] = parsing_module
+    
+    # Load parsing module with modified imports
+    with open(generator_dir / "parsing" / "parsing.py", 'r') as f:
+        parsing_code = f.read()
+        # Replace relative imports with absolute
+        parsing_code = parsing_code.replace('from ..core.model import', 'from core import')
+        parsing_code = parsing_code.replace('from ..core.rules import', 'from core import')
+    
+    exec(compile(parsing_code, str(generator_dir / "parsing" / "parsing.py"), 'exec'), vars(parsing_module))
+    
+    # Create generation module namespace
+    generation_module = types.ModuleType('generation')
+    sys.modules['generation'] = generation_module
+    
+    # Load strategies
+    with open(generator_dir / "generation" / "strategies.py", 'r') as f:
+        strategies_code = f.read()
+    exec(compile(strategies_code, str(generator_dir / "generation" / "strategies.py"), 'exec'), vars(generation_module))
+    
+    # Load generator with modified imports
+    with open(generator_dir / "generation" / "generator.py", 'r') as f:
+        generator_code = f.read()
+        # Replace relative imports
+        generator_code = generator_code.replace('from ..parsing.parsing import', 'from parsing import')
+        generator_code = generator_code.replace('from .strategies import', 'from generation import')
+    
+    exec(compile(generator_code, str(generator_dir / "generation" / "generator.py"), 'exec'), vars(generation_module))
+    
+    # Load allpairs strategy
+    with open(generator_dir / "generation" / "allpairsstrategy.py", 'r') as f:
+        allpairs_code = f.read()
+        # Replace relative imports
+        allpairs_code = allpairs_code.replace('from .strategies import', 'from generation import')
+    
+    exec(compile(allpairs_code, str(generator_dir / "generation" / "allpairsstrategy.py"), 'exec'), vars(generation_module))
+    
+    # Extract the classes and functions we need
+    parse = parsing_module.parse
+    Generator = generation_module.Generator
+    DepthFirstSearchStrategy = generation_module.DepthFirstSearchStrategy
+    RandomStrategy = generation_module.RandomStrategy
+    AllPairsRandomStrategy = generation_module.AllPairsRandomStrategy
+    
+except Exception as e:
     print(f"Error importing modules: {e}")
     print("Make sure you're running from the correct directory")
+    import traceback
+    traceback.print_exc()
     sys.exit(1)
 
 
@@ -65,12 +126,14 @@ def generate_robot_file(strategy_class, output_filename):
         # Create Robot Framework file with proper header
         full_content = f"""{result}"""
         
-        # Save to file
-        output_file = current_dir / output_filename
+        # Save to file in the out directory
+        output_dir = current_dir / "out"
+        output_dir.mkdir(exist_ok=True)
+        output_file = output_dir / output_filename
         with open(output_file, 'w') as f:
             f.write(full_content)
         
-        print(f"✅ Generated: {output_filename}")
+        print(f"✅ Generated: out/{output_filename}")
         return True
         
     except Exception as e:
@@ -121,12 +184,12 @@ def generate(ctx):
     if generated_files:
         print("\n📋 Generated files:")
         for filename in generated_files:
-            print(f"   • {filename}")
+            print(f"   • out/{filename}")
         print("\n🚀 Run individual files:")
         for filename in generated_files:
-            print(f"   robot {filename}")
+            print(f"   robot out/{filename}")
         print("\n🎯 Run all files:")
-        print(f"   robot {' '.join(generated_files)}")
+        print(f"   robot out/{' '.join(generated_files)}")
     else:
         print("❌ No files were generated successfully")
 
@@ -145,8 +208,9 @@ def clean(ctx):
     """
     print("🧹 Cleaning up generated files...")
     
-    # Remove generated .robot files
-    robot_files = glob.glob("shopping_*.robot")
+    # Remove generated .robot files from out directory
+    out_dir = current_dir / "out"
+    robot_files = list(out_dir.glob("shopping_*.robot")) if out_dir.exists() else []
     pyc_files = glob.glob("**/*.pyc", recursive=True)
     pycache_dirs = glob.glob("**/__pycache__", recursive=True)
     
@@ -155,9 +219,9 @@ def clean(ctx):
     # Remove generated robot files
     for robot_file in robot_files:
         try:
-            os.remove(robot_file)
+            robot_file.unlink()
             removed_count += 1
-            print(f"   🗑️  Removed: {robot_file}")
+            print(f"   🗑️  Removed: out/{robot_file.name}")
         except OSError:
             pass
     
@@ -197,16 +261,16 @@ def help(ctx):
     print("  inv help      - Show this help message")
     print()
     print("Generated files:")
-    print("  • shopping_depth_first.robot  - Depth-First Search Strategy")
-    print("  • shopping_random.robot       - Random Strategy")
-    print("  • shopping_all_pairs.robot    - All-Pairs Strategy")
+    print("  • out/shopping_depth_first.robot  - Depth-First Search Strategy")
+    print("  • out/shopping_random.robot       - Random Strategy")
+    print("  • out/shopping_all_pairs.robot    - All-Pairs Strategy")
     print()
     print("Usage:")
     print("  inv generate              # Generate all test files")
     print("  inv clean                 # Remove generated files")
     print()
     print("Running tests:")
-    print("  robot shopping_depth_first.robot      # Run depth-first tests")
-    print("  robot shopping_random.robot           # Run random tests")
-    print("  robot shopping_all_pairs.robot        # Run all-pairs tests")
-    print("  robot shopping_*.robot                # Run all generated tests")
+    print("  robot out/shopping_depth_first.robot      # Run depth-first tests")
+    print("  robot out/shopping_random.robot           # Run random tests")
+    print("  robot out/shopping_all_pairs.robot        # Run all-pairs tests")
+    print("  robot out/shopping_*.robot                # Run all generated tests")
