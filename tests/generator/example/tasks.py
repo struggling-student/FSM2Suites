@@ -17,10 +17,10 @@ sys.path.insert(0, str(parent_dir))
 
 # Import after path modification
 try:
-    from src.machine.parsing import parse
-    from src.machine.generator import Generator
-    from src.machine.strategies import DepthFirstSearchStrategy, RandomStrategy
-    from src.machine.allpairsstrategy import AllPairsRandomStrategy
+    from src.parsing import parse
+    from src.generator import Generator
+    from src.strategies import DepthFirstSearchStrategy, RandomStrategy
+    from src.allpairsstrategy import AllPairsRandomStrategy
 except ImportError as e:
     print(f"Error importing modules: {e}")
     print("Make sure you're running from the correct directory")
