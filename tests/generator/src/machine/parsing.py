@@ -1,4 +1,9 @@
-from __future__ import print_function
+"""Parser for .machine files using pyparsing grammar.
+
+This module provides a pure pyparsing implementation for parsing
+finite state machine definitions into Machine objects.
+"""
+
 from pyparsing import (CharsNotIn, Forward, Literal, LineEnd, Optional,
                        Regex, StringEnd, White, Word, ZeroOrMore,
                        delimitedList, printables,
@@ -210,6 +215,7 @@ machine.setWhitespaceChars(' ')
 
 
 class MachineParsingException(Exception):
+    """Exception raised when machine parsing fails."""
     pass
 
 

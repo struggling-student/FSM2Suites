@@ -2,6 +2,7 @@ import re
 
 
 class EquivalenceRule(object):
+    """Rule that enforces two conditions have the same truth value."""
 
     def __init__(self, condition1, condition2):
         self._condition1 = condition1
@@ -15,6 +16,7 @@ class EquivalenceRule(object):
 
 
 class ImplicationRule(object):
+    """Rule that enforces logical implication between two conditions."""
 
     def __init__(self, condition1, condition2):
         self._condition1 = condition1
@@ -28,6 +30,7 @@ class ImplicationRule(object):
 
 
 class AndRule(object):
+    """Rule that enforces all conditions must be true."""
 
     def __init__(self, conditions):
         self._conditions = conditions
@@ -40,6 +43,7 @@ class AndRule(object):
 
 
 class OrRule(object):
+    """Rule that enforces at least one condition must be true."""
 
     def __init__(self, conditions):
         self._conditions = conditions
@@ -52,6 +56,7 @@ class OrRule(object):
 
 
 class NotRule(object):
+    """Rule that negates a condition."""
 
     def __init__(self, condition):
         self._condition = condition
@@ -64,6 +69,7 @@ class NotRule(object):
 
 
 class Condition(object):
+    """Basic equality condition for variable values."""
 
     def __init__(self, variable_name, value):
         self._name = variable_name.strip()
@@ -77,10 +83,12 @@ class Condition(object):
 
 
 def UnequalCondition(variable_name, value):
+    """Factory function for inequality condition."""
     return NotRule(Condition(variable_name, value))
 
 
 class GreaterThanCondition(object):
+    """Condition for greater than comparison."""
 
     def __init__(self, variable_name, value):
         self._name = variable_name.strip()
@@ -94,6 +102,7 @@ class GreaterThanCondition(object):
 
 
 class GreaterThanOrEqualCondition(object):
+    """Condition for greater than or equal comparison."""
 
     def __init__(self, variable_name, value):
         self._name = variable_name.strip()
@@ -107,6 +116,7 @@ class GreaterThanOrEqualCondition(object):
 
 
 class LessThanCondition(object):
+    """Condition for less than comparison."""
 
     def __init__(self, variable_name, value):
         self._name = variable_name.strip()
@@ -120,6 +130,7 @@ class LessThanCondition(object):
 
 
 class LessThanOrEqualCondition(object):
+    """Condition for less than or equal comparison."""
 
     def __init__(self, variable_name, value):
         self._name = variable_name.strip()
@@ -133,6 +144,7 @@ class LessThanOrEqualCondition(object):
 
 
 class RegexCondition(object):
+    """Condition for regex pattern matching."""
 
     def __init__(self, variable_name, value):
         self._name = variable_name.strip()
@@ -146,6 +158,7 @@ class RegexCondition(object):
 
 
 class RegexNegatedCondition(object):
+    """Condition for negated regex pattern matching."""
 
     def __init__(self, variable_name, value):
         self._name = variable_name.strip()

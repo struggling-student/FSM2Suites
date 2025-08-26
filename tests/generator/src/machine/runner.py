@@ -1,17 +1,11 @@
-from __future__ import print_function
-
 import os
 import sys
-from .parsing import MachineParsingException, parse
-
-from . import __version__
 import argparse
 
+from .parsing import MachineParsingException, parse
+from . import __version__
 from .generator import Generator
 from .strategies import DepthFirstSearchStrategy, RandomStrategy
-
-if sys.version_info.major == 3:
-    unicode = str
 
 parser = argparse.ArgumentParser(description='Machine {:s} - '.format(__version__) +
                                  'a test data generator for Robot Framework',
@@ -50,7 +44,7 @@ def main():
         with open(args.input, 'r') as inp:
             machine = parse(inp.read())
     except IOError as e:
-        sys.exit(unicode(e))
+        sys.exit(str(e))
     except MachineParsingException:
         sys.exit(1)
 

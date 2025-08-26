@@ -2,6 +2,7 @@ import re
 
 
 class Machine(object):
+    """Represents a finite state machine with states, variables, and rules."""
 
     def __init__(self, states, variables, rules, settings_table=None,
                  variables_table=None, keywords_table=None):
@@ -11,11 +12,10 @@ class Machine(object):
         self._settings_table = settings_table or []
         self._variables_table = variables_table or []
         self._keywords_table = keywords_table or []
-        # Don't validate immediately - defer to validate() method
         self._validated = False
 
     def validate(self):
-        """Validate the machine after all components are parsed"""
+        """Validate the machine after all components are parsed."""
         if self._validated:
             return
         
@@ -27,27 +27,48 @@ class Machine(object):
 
     @property
     def start_state(self):
+        """Get the initial state of the machine."""
         if not self._validated:
             self.validate()
         return self.states[0]
 
     @property
     def variable_value_mapping(self):
+        """Get current variable values as a dictionary."""
         if not self._validated:
             self.validate()
         return dict((v.name, v.current_value) for v in self.variables)
 
     def find_state_by_name(self, name):
+        """Find a state by its name."""
         for state in self.states:
             if state.name == name:
                 return state
         return None
 
     def find_variable_by_name(self, name):
+        """Find a variable by its name."""
         for variable in self.variables:
             if variable.name == name:
                 return variable
         return None
+
+    def rules_are_ok(self, values):
+        """Check if variable values satisfy all rules."""
+        if not self._validated:
+            self.validate()
+        value_mapping = dict((v.name, value) for v, value in zip(self.variables, values))
+        for rule in self.rules:
+            if not rule.is_valid(value_mapping=value_mapping):
+                return False
+        return True
+
+    def apply_variable_values(self, values):
+        """Apply variable values to the machine."""
+        if not self._validated:
+            self.validate()
+        for variable, value in zip(self.variables, values):
+            variable.set_current_value(value)
 
     def write_settings_table(self, output):
         if self._settings_table:
@@ -83,23 +104,9 @@ class Machine(object):
     def write_variable_setting_step(values, output):
         output.write('  Set Machine Variables  {:s}\n'.format('  '.join(values)))
 
-    def rules_are_ok(self, values):
-        if not self._validated:
-            self.validate()
-        value_mapping = dict((v.name, value) for v, value in zip(self.variables, values))
-        for rule in self.rules:
-            if not rule.is_valid(value_mapping=value_mapping):
-                return False
-        return True
-
-    def apply_variable_values(self, values):
-        if not self._validated:
-            self.validate()
-        for variable, value in zip(self.variables, values):
-            variable.set_current_value(value)
-
 
 class State(object):
+    """Represents a state in the finite state machine."""
 
     def __init__(self, name, steps, actions):
         self.name = name
@@ -108,6 +115,7 @@ class State(object):
 
     @property
     def actions(self):
+        """Get available actions from this state."""
         result = []
         names = set()
         for action in self._actions:
@@ -117,19 +125,23 @@ class State(object):
         return result
 
     def set_machine(self, machine):
+        """Associate this state with a machine and validate actions."""
         for action in self._actions:
             action.set_machine(machine)
 
     def write_steps_to(self, output):
+        """Write state steps to output."""
         for step in self.steps:
             output.write(step + '\n')
 
     def write_to(self, output):
+        """Write state to output."""
         if self.steps:
             output.write('  {:s}\n'.format(self.name))
 
 
 class Action(object):
+    """Represents an action that transitions between states."""
 
     def __init__(self, name, next_state, condition=None, args=None):
         self.name = name
@@ -139,6 +151,7 @@ class Action(object):
         self._machine = None
 
     def set_machine(self, machine):
+        """Associate this action with a machine and validate target state."""
         self._machine = machine
         if not self.next_state:
             raise AssertionError('Invalid end state "{:s}" in '.format(self._next_state_name) +
@@ -146,9 +159,11 @@ class Action(object):
 
     @property
     def next_state(self):
+        """Get the target state for this action."""
         return self._machine.find_state_by_name(self._next_state_name)
 
     def is_available(self):
+        """Check if this action is available based on current conditions."""
         if not self.condition:
             return True
         if self.condition == 'otherwise':
@@ -156,13 +171,12 @@ class Action(object):
         return self.condition.is_valid(value_mapping=self._machine.variable_value_mapping)
 
     def write_to(self, output):
+        """Write action to output with resolved variables."""
         if self.name:
             if self.args:
-                # Resolve variables in arguments and write action with resolved arguments
                 resolved_args = []
                 for arg in self.args:
                     if self._machine and Variable.PATTERN.search(arg):
-                        # Resolve variables in this argument
                         resolved_arg = Variable.PATTERN.sub(self._resolve_variable, arg)
                         resolved_args.append(resolved_arg)
                     else:
@@ -174,7 +188,7 @@ class Action(object):
         self.next_state.write_to(output)
 
     def _resolve_variable(self, var_match):
-        """Helper method to resolve variable references in arguments"""
+        """Helper method to resolve variable references in arguments."""
         var = self._machine.find_variable_by_name(var_match.group(0))
         if not var:
             return var_match.group(0)
@@ -182,6 +196,8 @@ class Action(object):
 
 
 class Variable(object):
+    """Represents a variable with multiple possible values."""
+    
     REGEX = r'\$\{[_A-Z][_A-Z0-9]*\}'
     PATTERN = re.compile(REGEX)
     _NO_VALUE = object()
@@ -193,21 +209,24 @@ class Variable(object):
         self._machine = None
 
     def set_machine(self, machine):
+        """Associate this variable with a machine."""
         self._machine = machine
 
     def set_current_value(self, value):
+        """Set the current value of this variable."""
         self._current_value = value
 
     @property
     def current_value(self):
+        """Get the current value with variable resolution."""
         if self._current_value is Variable._NO_VALUE:
             raise AssertionError('No current value set')
         return self._resolve_value(self._current_value)
 
     def _resolve_value(self, value):
-        # Simple recursion guard to prevent infinite loops
+        """Resolve variable references within the value."""
         if hasattr(self, '_resolving') and self._resolving:
-            return value  # Return the original value if we're already resolving
+            return value  # Prevent infinite recursion
         
         self._resolving = True
         try:
@@ -216,6 +235,7 @@ class Variable(object):
             self._resolving = False
 
     def _resolve_variable(self, var_match):
+        """Helper method to resolve variable references."""
         var = self._machine.find_variable_by_name(var_match.group(0))
         if not var:
             return var_match.group(0)

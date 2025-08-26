@@ -1,6 +1,8 @@
 import random
 
+
 class _Strategy(object):
+    """Base class for test generation strategies."""
 
     def __init__(self, machine, max_actions, to_state=None):
         self._machine = machine
@@ -9,28 +11,34 @@ class _Strategy(object):
         assert not to_state or self._machine.find_state_by_name(to_state)
 
     def _matching_to_state(self, test):
+        """Check if test ends in the target state."""
         return not self._to_state or self._to_state == test[-1].next_state.name
 
 
 class DepthFirstSearchStrategy(_Strategy):
+    """Strategy that generates tests using depth-first search through the state machine."""
 
     def tests(self):
+        """Generate all possible tests using depth-first search."""
         for values in self._variable_value_sets(self._machine.variables):
             self._machine.apply_variable_values(values)
             for test in self._generate_all_from(self._machine.start_state, self._max_actions):
                 yield test, [v.current_value for v in self._machine.variables]
 
     def _variable_value_sets(self, variables):
-            if not variables:
-                return ([],)
-            return (vs for vs in self._var_set(variables) if self._machine.rules_are_ok(vs))
+        """Generate all valid combinations of variable values."""
+        if not variables:
+            return ([],)
+        return (vs for vs in self._var_set(variables) if self._machine.rules_are_ok(vs))
 
     def _var_set(self, vars):
+        """Generate cartesian product of variable values."""
         if not vars:
             return [[]]
-        return ([val]+sub_set for val in vars[0].values for sub_set in self._var_set(vars[1:]))
+        return ([val] + sub_set for val in vars[0].values for sub_set in self._var_set(vars[1:]))
 
     def _generate_all_from(self, state, max_actions):
+        """Generate all possible action sequences from a given state."""
         if not state.actions or max_actions == 0:
             if self._to_state and self._to_state != state.name:
                 return
@@ -38,16 +46,18 @@ class DepthFirstSearchStrategy(_Strategy):
         else:
             at_least_one_generated = False
             for action in state.actions:
-                for test in self._generate_all_from(action.next_state, max_actions-1):
+                for test in self._generate_all_from(action.next_state, max_actions - 1):
                     at_least_one_generated = True
-                    yield [action]+test
+                    yield [action] + test
             if not at_least_one_generated and self._to_state == state.name:
                 yield []
 
 
 class RandomStrategy(_Strategy):
+    """Strategy that generates tests randomly."""
 
     def tests(self):
+        """Generate tests randomly until stopped."""
         while True:
             test = self._generate_test(self._generate_variable_values())
             if not test and self._to_state and self._to_state != self._machine.start_state.name:
@@ -55,6 +65,7 @@ class RandomStrategy(_Strategy):
             yield test, [v.current_value for v in self._machine.variables]
 
     def _generate_test(self, values):
+        """Generate a single random test."""
         test = []
         self._machine.apply_variable_values(values)
         current_state = self._machine.start_state
@@ -67,6 +78,7 @@ class RandomStrategy(_Strategy):
         return test
 
     def _generate_variable_values(self):
+        """Generate random variable values that satisfy all rules."""
         while True:
             candidate = [random.choice(v.values) for v in self._machine.variables]
             if self._machine.rules_are_ok(candidate):

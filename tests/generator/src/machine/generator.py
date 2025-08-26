@@ -1,18 +1,63 @@
-from __future__ import print_function
-
+from io import StringIO
 from .parsing import parse
 from .strategies import DepthFirstSearchStrategy
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
 
 class Generator(object):
+    """Generator for creating Robot Framework test files from state machines."""
+    
     def __init__(self):
         self.visited_states = set()
         self.visited_actions = set()
+
+    def generate(self, machine, max_tests=1000, max_actions=None, to_state=None, output=None,
+                 strategy=DepthFirstSearchStrategy, all_actions=None):
+        """Generate test cases and write them to output."""
+        max_actions = -1 if max_actions is None else max_actions
+        
+        if all_actions is not None:
+            self._generate_with_coverage(machine, max_tests, max_actions, to_state, output, strategy, all_actions)
+        else:
+            self._generate_without_coverage(machine, max_tests, max_actions, to_state, output, strategy)
+
+    def transform(self, text, all_actions=None):
+        """Transform machine definition text into Robot Framework test file."""
+        output = StringIO()
+        machine = parse(text)
+        
+        if all_actions is None:
+            all_actions = self._collect_all_actions(machine)
+        
+        self.generate(machine, output=output, all_actions=all_actions)
+        return output.getvalue()
+
+    def _generate_with_coverage(self, machine, max_tests, max_actions, to_state, output, strategy, all_actions):
+        """Generate tests with coverage information."""
+        temp_output = StringIO()
+        self._write_full_test_file(machine, max_tests, max_actions, to_state, temp_output, strategy)
+        
+        self._write_coverage_comments(machine, all_actions, output)
+        output.write(temp_output.getvalue())
+
+    def _generate_without_coverage(self, machine, max_tests, max_actions, to_state, output, strategy):
+        """Generate tests without coverage information."""
+        self._write_full_test_file(machine, max_tests, max_actions, to_state, output, strategy)
+
+    def _write_full_test_file(self, machine, max_tests, max_actions, to_state, output, strategy):
+        """Write complete test file with settings, variables, tests, and keywords."""
+        machine.write_settings_table(output)
+        machine.write_variables_table(output)
+        output.write('*** Test Cases ***')
+        self._write_tests(machine, max_tests, max_actions, to_state, output, strategy)
+        machine.write_keywords_table(output)
+
+    def _collect_all_actions(self, machine):
+        """Collect all actions from the machine states."""
+        all_actions = set()
+        for state in machine.states:
+            for action in state._actions:
+                all_actions.add(action)
+        return all_actions
 
     def _write_test(self, name, machine, output, test, values):
         output.write('\n{:s}\n'.format(name))
@@ -106,41 +151,3 @@ class Generator(object):
         output.write('# ' + '=' * 76 + '\n')
         output.write('\n')
 
-    def generate(self, machine, max_tests=1000, max_actions=None, to_state=None, output=None,
-                 strategy=DepthFirstSearchStrategy, all_actions=None):
-        max_actions = -1 if max_actions is None else max_actions
-        
-        # Write coverage comments first if all_actions is provided
-        if all_actions is not None:
-            # First, generate everything in memory to collect coverage info
-            temp_output = StringIO()
-            machine.write_settings_table(temp_output)
-            machine.write_variables_table(temp_output)
-            temp_output.write('*** Test Cases ***')
-            self._write_tests(machine, max_tests, max_actions, to_state, temp_output, strategy)
-            machine.write_keywords_table(temp_output)
-            
-            # Now write coverage comments and then the generated content
-            self._write_coverage_comments(machine, all_actions, output)
-            output.write(temp_output.getvalue())
-        else:
-            # Original behavior when no coverage info is needed
-            machine.write_settings_table(output)
-            machine.write_variables_table(output)
-            output.write('*** Test Cases ***')
-            self._write_tests(machine, max_tests, max_actions, to_state, output, strategy)
-            machine.write_keywords_table(output)
-
-    def transform(self, text, all_actions=None):
-        output = StringIO()
-        machine = parse(text)
-        
-        # If all_actions is not provided, collect them from the machine
-        if all_actions is None:
-            all_actions = set()
-            for state in machine.states:
-                for action in state._actions:
-                    all_actions.add(action)
-        
-        self.generate(machine, output=output, all_actions=all_actions)
-        return output.getvalue()
