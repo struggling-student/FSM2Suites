@@ -1,14 +1,14 @@
 from __future__ import print_function
-from pyparsing import (CharsNotIn, Forward, Literal, LineEnd, OneOrMore, Optional,
+from pyparsing import (CharsNotIn, Forward, Literal, LineEnd, Optional,
                        Regex, StringEnd, White, Word, ZeroOrMore,
                        delimitedList, printables,
                        ParseBaseException)
 from .model import Machine, State, Action, Variable
 from .rules import (AndRule, Condition, EquivalenceRule, OrRule,
-                                   NotRule, ImplicationRule, UnequalCondition,
-                                   GreaterThanCondition, GreaterThanOrEqualCondition,
-                                   LessThanCondition, LessThanOrEqualCondition,
-                                   RegexCondition, RegexNegatedCondition)
+                   NotRule, ImplicationRule, UnequalCondition,
+                   GreaterThanCondition, GreaterThanOrEqualCondition,
+                   LessThanCondition, LessThanOrEqualCondition,
+                   RegexCondition, RegexNegatedCondition)
 
 
 end_of_line = Regex(r' *\n') ^ LineEnd()
@@ -32,16 +32,18 @@ variable = Regex(Variable.REGEX)
 
 variable_value = Regex(r'[\w\$\{\}!?\-\=\_\.\/]+( [\w\$\{\}!?\-\=\_\.\/]+)*')
 
-splitter = Literal(' ') + OneOrMore(' ')
+splitter = Regex(r'  +')
+splitter.leaveWhitespace()
 splitter.setParseAction(lambda t: '  ')
 
-variable_values = (variable_value + ZeroOrMore(splitter + variable_value)).setResultsName('variable_values')
-variable_values.setParseAction(lambda t: [[t[2 * i] for i in range(int((len(t) + 1) / 2))]])
+variable_values = (variable_value + ZeroOrMore(splitter + variable_value))
+variable_values.setParseAction(lambda t: t[0::2])
+variable_values.setResultsName('variable_values')
 
 variable_definition = variable.setResultsName(
     'variable_name') + splitter + 'any of' + splitter + variable_values + end_of_line
 variable_definition.leaveWhitespace()
-variable_definition.setParseAction(lambda t: [Variable(t.variable_name, list(t.variable_values))])
+variable_definition.setParseAction(lambda t: [Variable(t[0], [t[i] for i in range(4, len(t)-1)])])
 
 rule = Forward()
 
@@ -111,36 +113,34 @@ rule << (not_rule ^ equivalence_rule ^ implication_rule ^ and_rule ^ or_rule ^ c
 
 step = Regex(r'  [^\n\[][^\n]*(?=\n)') + LineEnd()
 step.leaveWhitespace()
-step.setParseAction(lambda t: [t[0]])
+step.setParseAction(lambda t: t[0].strip())
 
-action_header = White(min=2) + '[Actions]'
+action_header = White(min=2) + '[Actions]' + end_of_line
 
-condition = splitter + Literal('when') + splitter + rule
-condition = condition ^ Regex(r'  +otherwise')
+when_condition = splitter + Literal('when') + splitter + rule
+when_condition.setParseAction(lambda t: t[3])
 
+otherwise_condition = Regex(r'  +otherwise')
+otherwise_condition.setParseAction(lambda t: 'otherwise')
 
-def parse_condition(cond):
-    if len(cond) > 1:
-        return [cond[3]]
-    return ['otherwise']
-
-
+condition = when_condition ^ otherwise_condition
 condition.leaveWhitespace()
-condition.setParseAction(parse_condition)
 condition = Optional(condition).setResultsName('condition')
 
-# Add support for args
 args_keyword = splitter + Literal('args').suppress() + splitter
 arguments = ZeroOrMore(variable_value + Optional(splitter))
 arguments.setParseAction(lambda t: [t[i] for i in range(len(t)) if i % 2 == 0])
 args_section = Optional(args_keyword + arguments).setResultsName('args')
 
-action = White(min=4) + Optional(robo_step + White(min=2)) + \
+action = White(min=4) + robo_step + White(min=2) + \
          '==>' + White(min=2) + state_name + condition + args_section + end_of_line
 action.leaveWhitespace()
-action.setParseAction(lambda t: [Action(t.robo_step.rstrip(), t.state_name, t.condition, getattr(t, 'args', None))])
+action.setParseAction(lambda t: Action(t.robo_step.strip(), 
+                                      t.state_name, 
+                                      t.condition if t.condition else None, 
+                                      t.args if hasattr(t, 'args') and t.args else []))
 
-actions = action_header + end_of_line + OneOrMore(action).setResultsName('actions')
+actions = action_header + ZeroOrMore(action).setResultsName('actions')
 actions = Optional(actions)
 actions.leaveWhitespace()
 actions.setResultsName('actions')
@@ -150,42 +150,61 @@ comment.leaveWhitespace()
 
 steps = ZeroOrMore(step).setResultsName('steps')
 
-state = state_name + end_of_line + steps + actions
-state.leaveWhitespace()
-state.setParseAction(lambda p: State(p.state_name, list(p.steps), list(p.actions)))
-
 machine_header = Literal('*** Machine ***') + end_of_line
-states = state + ZeroOrMore(OneOrMore(LineEnd()) + state)
-states.setParseAction(lambda t: [item for item in t if hasattr(item, 'name')])
-states = states.setResultsName('states')
 variables = ZeroOrMore(variable_definition).setResultsName('variables')
 rules = ZeroOrMore(rule + end_of_line).setResultsName('rules')
 rules.setParseAction(lambda t: [t[i] for i in range(len(t)) if i % 2 == 0])
+
+single_state = state_name + end_of_line + steps + actions
+single_state.leaveWhitespace()
+single_state.setParseAction(lambda p: State(p.state_name, list(p.steps) if p.steps else [], list(p.actions) if p.actions else []))
+
+states_section = single_state + ZeroOrMore(ZeroOrMore(LineEnd()) + single_state)
+states_section.setResultsName('states')
+
 machine = Optional(settings_table).setResultsName('settings_table') + \
           Optional(variables_table).setResultsName('variables_table') + \
-          machine_header + ZeroOrMore(end_of_line) + variables + \
-          ZeroOrMore(end_of_line) + rules + \
-          ZeroOrMore(end_of_line) + states + \
+          machine_header + \
+          Optional(ZeroOrMore(end_of_line) + variables) + \
+          Optional(ZeroOrMore(end_of_line) + rules) + \
+          ZeroOrMore(end_of_line) + states_section + \
           Optional(keywords_table).setResultsName('keywords_table')
 
 
-def create_machine(p):
-    # For some reason, p.rules contains only the _first_ rule. Work around it
-    # by finding rule elements based on their type.
+def _create_machine(p):
     def is_rule(obj):
         return isinstance(obj, (EquivalenceRule, ImplicationRule, AndRule,
                                 OrRule, NotRule))
 
     rules = [v for v in p if is_rule(v)]
-    return Machine(list(p.states),
+    
+    from .model import State
+    states = [v for v in p if isinstance(v, State)]
+    
+    settings_table = p.settings_table if hasattr(p, 'settings_table') and p.settings_table else []
+    variables_table = p.variables_table if hasattr(p, 'variables_table') and p.variables_table else []
+    keywords_table = p.keywords_table if hasattr(p, 'keywords_table') and p.keywords_table else []
+    
+    if isinstance(settings_table, str):
+        settings_table = [settings_table]
+    if isinstance(variables_table, str):
+        variables_table = [variables_table]
+    if isinstance(keywords_table, str):
+        keywords_table = [keywords_table]
+    
+    machine = Machine(states,
                        list(p.variables),
-                       rules,  # p.rules contains only first rule(!)
-                       settings_table=p.settings_table,
-                       variables_table=p.variables_table,
-                       keywords_table=p.keywords_table)
+                       rules,
+                       settings_table=settings_table,
+                       variables_table=variables_table,
+                       keywords_table=keywords_table)
+    
+    machine.validate()
+    
+    return machine
 
 
-machine.setParseAction(create_machine)
+machine.setParseAction(_create_machine)
 machine.ignore(comment)
 machine.setWhitespaceChars(' ')
 
@@ -194,7 +213,7 @@ class MachineParsingException(Exception):
     pass
 
 
-def resolve_whitespace(text):
+def _resolve_whitespace(text):
     output_texts = []
     for index, line in enumerate(text.splitlines()):
         if '\t' in line:
@@ -204,9 +223,11 @@ def resolve_whitespace(text):
 
 
 def parse(text):
+    """Parse machine definition text and return Machine object."""
     try:
-        # Parse machine definition file
-        return parse_machine(text)
+        text = _resolve_whitespace(text)
+        result = machine.parseString(text)
+        return result[0]
     except ParseBaseException as pe:
         print('Parser failed at line {:d}'.format(pe.lineno))
         print(pe.msg)
@@ -217,193 +238,4 @@ def parse(text):
         raise MachineParsingException(f"Parsing failed: {ae}")
 
 
-def parse_machine(content):
-    """Parse machine definition file with states, variables, rules, and actions"""
-    import re
-    
-    lines = content.strip().split('\n')
-    current_section = None
-    variables = []
-    states = []
-    rules = []
-    current_state = None
-    settings_content = []
-    variables_content = []
-    keywords_content = []
-    
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        stripped_line = line.strip()
-        
-        # Skip empty lines and comments
-        if not stripped_line or stripped_line.startswith('#'):
-            i += 1
-            continue
-        
-        # Section headers
-        if stripped_line == '*** Settings ***':
-            current_section = 'settings'
-            settings_content.append(line + '\n')
-            i += 1
-            continue
-        elif stripped_line == '*** Variables ***':
-            current_section = 'variables'
-            variables_content.append(line + '\n')
-            i += 1
-            continue
-        elif stripped_line == '*** Machine ***':
-            current_section = 'machine'
-            i += 1
-            continue
-        elif stripped_line == '*** Keywords ***':
-            current_section = 'keywords'
-            keywords_content.append(line + '\n')
-            i += 1
-            continue
-        
-        # Parse content based on current section
-        if current_section == 'settings':
-            settings_content.append(line + '\n')
-        elif current_section == 'variables':
-            variables_content.append(line + '\n')
-        elif current_section == 'keywords':
-            keywords_content.append(line + '\n')
-        elif current_section == 'machine':
-            # Variable definition
-            if stripped_line.startswith('${') and 'any of' in stripped_line:
-                var_match = re.match(r'\$\{(\w+)\}\s+any of\s+(.+)', stripped_line)
-                if var_match:
-                    var_name = '${' + var_match.group(1) + '}'
-                    values = [v.strip() for v in var_match.group(2).split()]
-                    variables.append(Variable(var_name, values))
-            
-            # Rule definition (contains ==>)
-            elif '==>' in stripped_line and not line.startswith('    '):
-                # Parse rule definition
-                try:
-                    parsed_rule = rule.parseString(stripped_line)[0]
-                    rules.append(parsed_rule)
-                except Exception:
-                    # Parse as implication rule
-                    parts = stripped_line.split('==>')
-                    if len(parts) == 2:
-                        antecedent_str = parts[0].strip()
-                        consequent_str = parts[1].strip()
-                        
-                        antecedent = parse_condition(antecedent_str)
-                        consequent = parse_condition(consequent_str)
-                        
-                        rule_obj = ImplicationRule(antecedent, consequent)
-                        rules.append(rule_obj)
-            
-            # State definition (line with no leading spaces and is capitalized)
-            elif stripped_line and not line.startswith(' ') and stripped_line[0].isupper():
-                # Save previous state
-                if current_state:
-                    states.append(current_state)
-                
-                # Start new state
-                current_state = State(stripped_line, [], [])
-            
-            # State step (starts with 2-4 spaces but is not an action)
-            elif line.startswith('  ') and not ('==>' in line and line.startswith('    ')) and stripped_line != '[Actions]':
-                if current_state:
-                    current_state.steps.append(stripped_line)
-            
-            # Skip [Actions] header
-            elif stripped_line == '[Actions]':
-                pass
-            
-            # Action definition (starts with 4+ spaces and contains ==>)
-            elif line.startswith('    ') and '==>' in line:
-                if current_state:
-                    # Parse action definition
-                    try:
-                        action_line = line.strip()
-                        # Parse with action grammar
-                        parsed_action = action.parseString('    ' + action_line)[0]
-                        current_state._actions.append(parsed_action)
-                    except Exception:
-                        # Parse action manually
-                        action_line = line.strip()
-                        parts = action_line.split('==>')
-                        if len(parts) == 2:
-                            action_name = parts[0].strip()
-                            target_and_rest = parts[1].strip()
-                            
-                            target = target_and_rest
-                            condition = None
-                            args = []
-                            
-                            # Parse target, condition, and args
-                            if ' when ' in target_and_rest:
-                                target_part, condition_and_args = target_and_rest.split(' when ', 1)
-                                target = target_part.strip()
-                                
-                                if ' args ' in condition_and_args:
-                                    condition_part, args_part = condition_and_args.split(' args ', 1)
-                                    condition = parse_condition(condition_part.strip())
-                                    args = [arg.strip() for arg in args_part.split()]
-                                else:
-                                    condition = parse_condition(condition_and_args.strip())
-                            elif target_and_rest.endswith(' otherwise'):
-                                target = target_and_rest.replace(' otherwise', '').strip()
-                                condition = 'otherwise'
-                            elif ' args ' in target_and_rest:
-                                target_part, args_part = target_and_rest.split(' args ', 1)
-                                target = target_part.strip()
-                                args = [arg.strip() for arg in args_part.split()]
-                            else:
-                                target = target_and_rest.strip()
-                            
-                            action_obj = Action(action_name, target, condition, args)
-                            current_state._actions.append(action_obj)
-        
-        i += 1
-    
-    # Add the last state
-    if current_state:
-        states.append(current_state)
-    
-    return Machine(
-        states=states,
-        variables=variables,
-        rules=rules,
-        settings_table=settings_content,
-        variables_table=variables_content,
-        keywords_table=keywords_content
-    )
 
-
-def parse_condition(condition_str):
-    """Parse a condition string"""
-    if not condition_str:
-        return None
-        
-    try:
-        # Parse with condition grammar
-        return condition_rule.parseString(condition_str)[0]
-    except Exception:
-        # Parse condition manually
-        condition_str = condition_str.strip()
-        
-        if '==' in condition_str and 'and' in condition_str:
-            parts = condition_str.split(' and ')
-            conditions = []
-            for part in parts:
-                if '==' in part:
-                    var, val = part.split('==', 1)
-                    conditions.append(Condition(var.strip(), val.strip()))
-            return AndRule(conditions) if len(conditions) > 1 else conditions[0]
-        elif '==' in condition_str:
-            var, val = condition_str.split('==', 1)
-            return Condition(var.strip(), val.strip())
-        elif ' in ' in condition_str:
-            var, val = condition_str.split(' in ', 1)
-            return Condition(var.strip(), val.strip())
-        elif '<=' in condition_str:
-            var, val = condition_str.split('<=', 1)
-            return Condition(var.strip(), val.strip())
-        else:
-            return None
