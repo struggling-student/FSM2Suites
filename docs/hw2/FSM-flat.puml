@@ -1,0 +1,29 @@
+@startuml
+start
+
+:Activated;
+
+:PreparingWth;
+:withTest;
+if (WthTest success?) then (yes)
+  :Wth Success;
+else (no)
+  :Wth Failed;
+  --> RolledBack
+  stop
+endif
+
+:PreparingDep;
+:depTest;
+if (DepTest success?) then (yes)
+  :Dep Success;
+else (no)
+  :Dep Failed;
+  --> RolledBack
+  stop
+endif
+
+:Committed;
+stop
+@enduml
+
