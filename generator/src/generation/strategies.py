@@ -16,14 +16,37 @@ class _Strategy(object):
 
 
 class DepthFirstSearchStrategy(_Strategy):
-    """Strategy that generates tests using depth-first search through the state machine."""
+    """Enhanced DFS strategy with loop prevention and diverse exploration."""
+
+    def __init__(self, machine, max_actions, to_state=None):
+        super(DepthFirstSearchStrategy, self).__init__(machine, max_actions, to_state)
+        self._explored_state_action_pairs = set()
 
     def tests(self):
-        """Generate all possible tests using depth-first search."""
-        for values in self._variable_value_sets(self._machine.variables):
+        """Enhanced DFS with loop prevention and diverse exploration."""
+        all_combinations = list(self._variable_value_sets(self._machine.variables))
+        
+        # If no combinations available, use empty values
+        if not all_combinations:
+            all_combinations = [[]]
+        
+        for values in all_combinations:
             self._machine.apply_variable_values(values)
-            for test in self._generate_all_from(self._machine.start_state, self._max_actions):
-                yield test, [v.current_value for v in self._machine.variables]
+            
+            # Generate tests with different path lengths to ensure diversity
+            path_lengths = [3, 7, max(10, self._max_actions // 2), self._max_actions]
+            path_lengths = [length for length in path_lengths if length <= self._max_actions]
+            
+            for max_len in path_lengths:
+                test_count = 0
+                max_tests_per_combo = max(5, 50 // len(all_combinations))
+                
+                for test in self._generate_diverse_paths(self._machine.start_state, max_len):
+                    if test_count >= max_tests_per_combo:
+                        break
+                    if self._matching_to_state(test):
+                        yield test, [v.current_value for v in self._machine.variables]
+                        test_count += 1
 
     def _variable_value_sets(self, variables):
         """Generate all valid combinations of variable values."""
@@ -37,20 +60,56 @@ class DepthFirstSearchStrategy(_Strategy):
             return [[]]
         return ([val] + sub_set for val in vars[0].values for sub_set in self._var_set(vars[1:]))
 
-    def _generate_all_from(self, state, max_actions):
-        """Generate all possible action sequences from a given state."""
+    def _generate_diverse_paths(self, state, max_actions, visited_in_path=None):
+        """Generate diverse paths with cycle detection and state-action tracking."""
+        if visited_in_path is None:
+            visited_in_path = []
+        
         if not state.actions or max_actions == 0:
-            if self._to_state and self._to_state != state.name:
-                return
             yield []
-        else:
-            at_least_one_generated = False
-            for action in state.actions:
-                for test in self._generate_all_from(action.next_state, max_actions - 1):
-                    at_least_one_generated = True
-                    yield [action] + test
-            if not at_least_one_generated and self._to_state == state.name:
+            return
+        
+        # Limit consecutive visits to same state (prevents tight loops)
+        recent_visits = visited_in_path[-4:] if len(visited_in_path) > 4 else visited_in_path
+        if recent_visits.count(state.name) >= 2:
+            # Allow one more visit, then stop to prevent infinite loops
+            if len([s for s in recent_visits if s == state.name]) >= 2:
                 yield []
+                return
+        
+        # Prioritize unexplored state-action pairs for better coverage
+        unexplored_actions = []
+        explored_actions = []
+        
+        for action in state.actions:
+            pair_key = (state.name, action.name, action.next_state.name)
+            if pair_key not in self._explored_state_action_pairs:
+                unexplored_actions.append(action)
+            else:
+                explored_actions.append(action)
+        
+        # Try unexplored actions first, then explored ones
+        actions_to_try = unexplored_actions + explored_actions
+        
+        for action in actions_to_try:
+            # Mark this state-action pair as explored
+            pair_key = (state.name, action.name, action.next_state.name)
+            self._explored_state_action_pairs.add(pair_key)
+            
+            new_path = visited_in_path + [state.name]
+            
+            for test in self._generate_diverse_paths(action.next_state, max_actions - 1, new_path):
+                yield [action] + test
+            
+            # For unexplored actions, generate multiple paths if possible
+            if action in unexplored_actions and max_actions > 1:
+                # Generate a few more paths from this action to explore thoroughly
+                extra_paths = 0
+                for test in self._generate_diverse_paths(action.next_state, max_actions - 1, new_path):
+                    if extra_paths >= 2:  # Limit extra exploration
+                        break
+                    yield [action] + test
+                    extra_paths += 1
 
 
 class RandomStrategy(_Strategy):
