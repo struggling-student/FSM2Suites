@@ -77,7 +77,7 @@ class Generator(object):
 
         strategy_class = strategy(machine, max_actions, to_state)
         for test, values in strategy_class.tests():
-            if i + skipped > max_tests:
+            if i > max_tests:
                 print('--tests-max generation try limit {:d} reached with {:d} tests generated'.format(max_tests, i - 1))
                 break
             if (tuple(test), tuple(values)) in generated_tests:
