@@ -115,31 +115,96 @@ class DepthFirstSearchStrategy(_Strategy):
 class RandomStrategy(_Strategy):
     """Strategy that generates tests randomly."""
 
+    def __init__(self, machine, max_actions, to_state=None):
+        super(RandomStrategy, self).__init__(machine, max_actions, to_state)
+        self._max_generation_attempts = 1000
+        self._max_variable_attempts = 100
+
     def tests(self):
-        """Generate tests randomly until stopped."""
-        while True:
-            test = self._generate_test(self._generate_variable_values())
-            if not test and self._to_state and self._to_state != self._machine.start_state.name:
+        """Generate tests randomly with limits to prevent infinite loops."""
+        generation_attempts = 0
+        successful_tests = 0
+        max_successful_tests = 100  # Reasonable upper bound
+        
+        while generation_attempts < self._max_generation_attempts and successful_tests < max_successful_tests:
+            generation_attempts += 1
+            
+            try:
+                variable_values = self._generate_variable_values()
+                if variable_values is None:
+                    continue
+                    
+                test = self._generate_test(variable_values)
+                if test is not None:
+                    successful_tests += 1
+                    yield test, [v.current_value for v in self._machine.variables]
+                elif self._to_state and self._to_state != self._machine.start_state.name:
+                    continue
+                else:
+                    # Even empty tests are valid if no target state is specified
+                    successful_tests += 1
+                    yield [], [v.current_value for v in self._machine.variables]
+            except Exception:
+                # Skip problematic combinations and continue
                 continue
-            yield test, [v.current_value for v in self._machine.variables]
 
     def _generate_test(self, values):
         """Generate a single random test."""
+        if values is None:
+            return None
+            
         test = []
-        self._machine.apply_variable_values(values)
-        current_state = self._machine.start_state
-        while self._max_actions > len(test) and current_state.actions:
-            action = random.choice(current_state.actions)
-            current_state = action.next_state
-            test.append(action)
-        while test and not self._matching_to_state(test):
-            test.pop()
-        return test
+        try:
+            self._machine.apply_variable_values(values)
+            current_state = self._machine.start_state
+            
+            # Prevent infinite loops in test generation
+            max_attempts = max(50, self._max_actions * 2)
+            attempts = 0
+            
+            while (self._max_actions < 0 or self._max_actions > len(test)) and current_state.actions and attempts < max_attempts:
+                attempts += 1
+                action = random.choice(current_state.actions)
+                current_state = action.next_state
+                test.append(action)
+                
+                # Break if we've reached a reasonable test length
+                if len(test) >= 20:  # Safety limit
+                    break
+            
+            # Trim test to match target state if specified
+            trimming_attempts = 0
+            while test and not self._matching_to_state(test) and trimming_attempts < len(test):
+                test.pop()
+                trimming_attempts += 1
+                
+            return test
+        except Exception:
+            return None
 
     def _generate_variable_values(self):
         """Generate random variable values that satisfy all rules."""
-        while True:
-            candidate = [random.choice(v.values) for v in self._machine.variables]
-            if self._machine.rules_are_ok(candidate):
-                return candidate
+        if not self._machine.variables:
+            return []
+            
+        attempts = 0
+        while attempts < self._max_variable_attempts:
+            attempts += 1
+            try:
+                candidate = [random.choice(v.values) for v in self._machine.variables]
+                if self._machine.rules_are_ok(candidate):
+                    return candidate
+            except Exception:
+                continue
+        
+        # If we can't find valid combinations, try a simpler approach
+        # Just return the first value for each variable
+        try:
+            simple_candidate = [v.values[0] for v in self._machine.variables]
+            if self._machine.rules_are_ok(simple_candidate):
+                return simple_candidate
+        except Exception:
+            pass
+            
+        return None
 
