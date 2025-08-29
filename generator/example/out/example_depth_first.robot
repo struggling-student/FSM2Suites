@@ -10,8 +10,8 @@
 # Covered actions (5/12):
 #     authenticate user  (Start -> Authenticated)
 #     continue working  (Success -> Authenticated)
-#     logout  (Authenticated -> Start)
 #     logout  (Success -> Start)
+#     logout  (Authenticated -> Start)
 #     perform action  (Authenticated -> Success)
 #
 # Uncovered states (3/6):
@@ -48,22 +48,16 @@ Test 1
   authenticate user
   perform action
   continue working
-  perform action
-  continue working
 
 Test 2
   Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
   authenticate user
-  perform action
-  continue working
   perform action
   logout
 
 Test 3
   Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
   authenticate user
-  perform action
-  continue working
   logout
   authenticate user
 
@@ -71,16 +65,16 @@ Test 4
   Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
   authenticate user
   perform action
-  logout
-  authenticate user
+  continue working
   perform action
+  continue working
 
 Test 5
   Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
   authenticate user
   perform action
-  logout
-  authenticate user
+  continue working
+  perform action
   logout
 
 *** Keywords ***

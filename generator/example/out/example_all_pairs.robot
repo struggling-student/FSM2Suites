@@ -2,29 +2,31 @@
 # TEST COVERAGE INFORMATION
 # ============================================================================
 #
-# Covered states (6/6):
+# Covered states (5/6):
 #     Authenticated
 #     End
 #     Error
 #     Failed
 #     Start
-#     Success
 #
-# Covered actions (10/12):
-#     authenticate user  (Start -> Authenticated)
+# Covered actions (8/12):
 #     authenticate user  (Start -> Failed)
-#     continue working  (Success -> Authenticated)
+#     authenticate user  (Start -> Authenticated)
 #     exit system  (Failed -> End)
-#     logout  (Error -> Start)
 #     logout  (Authenticated -> Start)
 #     perform action  (Authenticated -> Error)
-#     perform action  (Authenticated -> Success)
 #     restart system  (End -> Start)
+#     retry action  (Error -> Authenticated)
 #     retry authentication  (Failed -> Start)
 #
-# Uncovered actions (2/12):
+# Uncovered states (1/6):
+#     Success
+#
+# Uncovered actions (4/12):
+#     continue working (Success -> Authenticated)
 #     logout (Success -> Start)
-#     retry action (Error -> Authenticated)
+#     logout (Error -> Start)
+#     perform action (Authenticated -> Success)
 #
 # ============================================================================
 
@@ -44,26 +46,26 @@ ${INVALID_ACTION}     action_fail
 Test 1
   Set Machine Variables  ${VALID_USER}  ${VALID_ACTION}
   authenticate user
-  perform action
-  continue working
+  logout
+  authenticate user
   logout
   authenticate user
 
 Test 2
   Set Machine Variables  ${INVALID_USER}  ${VALID_ACTION}
   authenticate user
-  retry authentication
-  authenticate user
   exit system
   restart system
+  authenticate user
+  retry authentication
 
 Test 3
   Set Machine Variables  ${INVALID_USER}  ${INVALID_ACTION}
   authenticate user
-  exit system
-  restart system
+  retry authentication
   authenticate user
-  exit system
+  retry authentication
+  authenticate user
 
 Test 4
   Set Machine Variables  ${VALID_USER}  ${INVALID_ACTION}
@@ -71,7 +73,7 @@ Test 4
   logout
   authenticate user
   perform action
-  logout
+  retry action
 
 *** Keywords ***
 
