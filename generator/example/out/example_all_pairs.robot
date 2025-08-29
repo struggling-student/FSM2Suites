@@ -2,31 +2,29 @@
 # TEST COVERAGE INFORMATION
 # ============================================================================
 #
-# Covered states (5/6):
+# Covered states (6/6):
 #     Authenticated
 #     End
 #     Error
 #     Failed
 #     Start
+#     Success
 #
-# Covered actions (8/12):
-#     authenticate user  (Start -> Failed)
+# Covered actions (10/12):
 #     authenticate user  (Start -> Authenticated)
+#     authenticate user  (Start -> Failed)
+#     continue working  (Success -> Authenticated)
 #     exit system  (Failed -> End)
 #     logout  (Authenticated -> Start)
+#     perform action  (Authenticated -> Success)
 #     perform action  (Authenticated -> Error)
 #     restart system  (End -> Start)
 #     retry action  (Error -> Authenticated)
 #     retry authentication  (Failed -> Start)
 #
-# Uncovered states (1/6):
-#     Success
-#
-# Uncovered actions (4/12):
-#     continue working (Success -> Authenticated)
+# Uncovered actions (2/12):
 #     logout (Success -> Start)
 #     logout (Error -> Start)
-#     perform action (Authenticated -> Success)
 #
 # ============================================================================
 
@@ -48,16 +46,16 @@ Test 1
   authenticate user
   logout
   authenticate user
-  logout
-  authenticate user
+  perform action
+  continue working
 
 Test 2
   Set Machine Variables  ${INVALID_USER}  ${VALID_ACTION}
   authenticate user
+  retry authentication
+  authenticate user
   exit system
   restart system
-  authenticate user
-  retry authentication
 
 Test 3
   Set Machine Variables  ${INVALID_USER}  ${INVALID_ACTION}
@@ -70,10 +68,10 @@ Test 3
 Test 4
   Set Machine Variables  ${VALID_USER}  ${INVALID_ACTION}
   authenticate user
-  logout
-  authenticate user
   perform action
   retry action
+  logout
+  authenticate user
 
 *** Keywords ***
 
