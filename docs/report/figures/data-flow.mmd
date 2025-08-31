@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant MF as .machine File
+    participant P as Parser
+    participant M as Machine Object
+    participant G as Generator
+    participant S as Strategy
+    participant RF as .robot File
+
+    Note over MF,RF: Main Data Flow - From Machine Model to Robot Framework Tests
+
+    MF->>+P: parse() - textual contents
+    Note right of P: Line-oriented parsing<br/>or pyparsing grammar
+    P->>-M: Machine object created
+
+    M->>+G: generate() - machine object
+    G->>+S: Create strategy instance<br/>(depth-first, random, all-pairs)
+    S->>G: Generate test sequences<br/>with variable assignments
+    S->>-G: Return action sequences
+    
+    G->>G: Write Robot Framework output<br/>(Settings, Variables, Test Cases, Keywords)
+    G->>-RF: Write final .robot file
+    Note right of RF: Complete Robot Framework<br/>test suite generated
