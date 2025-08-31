@@ -2,19 +2,9 @@
 
 \subsection{Design Goals}
 
-The ``.machine`` format defines finite state machines used by the generator in
-\texttt{tests/generator}. Its syntax resembles Robot Framework tables so that
-engineers accustomed to Robot's plain text style can author models with minimal
-training. The grammar is intentionally concise: every section begins with a
-triple-asterisk header (for example ``*** Machine ***``) and relies on consistent
-indentation rather than explicit block markers. This yields readable models and
-ensures that hand-crafted machines can easily be versioned alongside tests.
+The ``.machine`` format defines Finite State Machines files, its syntax resembles Robot Framework tables so that engineers accustomed to Robot's plain text style can author models with minimal training. The grammar is intentionally concise: every section begins with a triple-asterisk header (for example ``*** Machine ***``) and relies on consistent indentation rather than explicit block markers. This yields readable models and ensures that hand-crafted machines can easily be versioned alongside tests.
 
-A primary goal is to separate variable declarations from state transitions. The
-\texttt{Variables} section enumerates parameter values that may vary across test
-cases. During generation, the engine combines these values with the state model
-to produce different execution paths. Rules placed after the variable block
-constrain valid combinations, preventing unrealistic or contradictory settings.
+A primary goal is to separate variable declarations from state transitions. The \texttt{Variables} section enumerates parameter values that may vary across test cases. During generation, the engine combines these values with the state model to produce different execution paths. Rules placed after the variable block constrain valid combinations, preventing unrealistic or contradictory settings.
 
 Within the \texttt{Machine} section each state appears at column~0 and may
 include optional step lines describing actions to execute upon entering the
@@ -39,12 +29,12 @@ models and executable tests. The implementation uses pyparsing for robust
 grammar-based parsing with flexible whitespace handling and comprehensive
 error reporting.
 
-Another goal is to keep the syntax simple enough for domain experts who may not be familiar with Python. Because every statement is plain ASCII, machine files can be edited with standard text editors and reviewed like source code. The format intentionally avoids complex nesting or macros. Instead, extensibility is achieved through keywords that encapsulate reusable sequences of Robot commands. By isolating variable declarations, state descriptions, and reusable keyword implementations, the grammar encourages small, composable models that evolve with the system under test.
+Another goal is to keep the syntax simple enough for domain experts who may not be familiar with Python. Because every statement is plain ASCII, machine files can be edited with standard text editors and reviewed like source code. The format intentionally avoids complex nesting or macros. Instead, extensibility is achieved through keywords that encapsulate reusable sequences of Robot commands. By isolating variable declarations, state descriptions, and reusable keyword implementations, the grammar encourages small, composable models that evolve with the System Under Test (SUT).
 
 \subsection{Complete EBNF Grammar}
 
 The following listing summarises the entire grammar recognised by the parser in
-\texttt{tests/generator/src/machine/parsing.py}. Long rules are wrapped for
+\texttt{generator/src/parsing/parsing.py}. Long rules are wrapped for
 clarity.
 
 \begin{lstlisting}[language=,caption={Full .machine grammar}, label={lst:machine_grammar}]
@@ -100,9 +90,7 @@ construction.
 Tokens such as \texttt{identifier}, \texttt{text}, and \texttt{value} rely on
 regular expressions defined in the Python implementation. They accept alphanumeric
 characters and typical punctuation. The grammar remains intentionally compact so
-that future operators or features can be added with minimal disruption. The
-pyparsing implementation provides robust error reporting and flexible whitespace
-handling compared to manual line-by-line parsing approaches. 
+that future operators or features can be added with minimal disruption. 
 
 \begin{lstlisting}[language=, caption={Simple example of a .machine file}, label={lst:machine_example}]
 *** Settings ***
@@ -121,16 +109,6 @@ Login Page
     Enter Credentials ==> Logged In    when ${PASSWORD} == "correct"
     Enter Credentials ==> Login Failed    otherwise
 
-Logged In
-  Verify Welcome Message
-  [Actions]
-    Logout ==> Login Page
-
-Login Failed
-  Verify Error Message
-  [Actions]
-    Try Again ==> Login Page
-
 *** Keywords ***
 Enter Credentials
     Input Text    username    ${USERNAME}
@@ -140,8 +118,7 @@ Enter Credentials
 
 \subsection{Semantic Validation Rules}
 
-Parsing uses a pure \texttt{pyparsing} implementation with a deferred validation
-pattern. The function \texttt{parse()} processes the entire machine definition
+The function \texttt{parse()} processes the entire machine definition
 using the pyparsing grammar specification, producing a \texttt{Machine} object
 composed of \texttt{State}, \texttt{Action}, and \texttt{Variable} instances.
 The parser explicitly records the original text of the \texttt{Settings},
@@ -153,10 +130,9 @@ issues between states and actions. The \texttt{Machine} constructor defers
 validation until the \texttt{validate()} method is explicitly called. Every
 \texttt{Action} validates that its target state exists when it is attached to a
 machine. The following code snippet demonstrates this validation:
-\begin{lstlisting}[language=python, caption={Machine deferred validation pattern}, label={lst:machine_validation}]
+\begin{lstlisting}[language=python, caption={Machine deferred validation pattern.}, label={lst:machine_validation}]
 class Machine(object):
-    def __init__(self, states, variables, rules, settings_table=None,
-                 variables_table=None, keywords_table=None):
+    def __init__(self, states, variables, rules):
         self.states = states or []
         self.variables = variables or []
         self.rules = rules or []
@@ -167,7 +143,6 @@ class Machine(object):
         """Validate the machine after all components are parsed"""
         if self._validated:
             return
-        
         for state in self.states:
             state.set_machine(self)
         for variable in self.variables:
@@ -178,28 +153,28 @@ If a transition refers to an undefined state, an exception halts validation when
 the machine's \texttt{validate()} method is called, giving immediate feedback
 about typos or missing states:
 
-\begin{lstlisting}[language=python, caption={Action state resolution}, label={lst:action_validation}]
+\begin{lstlisting}[language=python, caption={Action state resolution.}, label={lst:action_validation}]
 class Action(object):
     def set_machine(self, machine):
         self._machine = machine
         if not self.next_state:
-            raise AssertionError('Invalid end state "{:s}" in '.format(self._next_state_name) +
-                                 'action "{:s}"!'.format(self.name))
+            raise AssertionError('Invalid end state')
 \end{lstlisting}
 
 Variables may be referenced inside action arguments or conditions. The
 \texttt{Variable} class resolves nested references while guarding against
 recursive substitution:
-\begin{lstlisting}[language=python, caption={Variable resolution logic}, label={lst:variable_resolution}]
+\newpage
+\begin{lstlisting}[language=python, caption={Variable resolution logic.}, label={lst:variable_resolution}]
 class Variable(object):
     REGEX = r'\$\{[_A-Z][_A-Z0-9]*\}'
     PATTERN = re.compile(REGEX)
-    
+
     def _resolve_value(self, value):
         # Simple recursion guard to prevent infinite loops
         if hasattr(self, '_resolving') and self._resolving:
             return value  # Return the original value if we're already resolving
-        
+
         self._resolving = True
         try:
             return self.PATTERN.sub(self._resolve_variable, value)
@@ -212,12 +187,13 @@ its \texttt{is\_valid()} method, and the \texttt{Machine.rules\_are\_ok}
 function only accepts assignments satisfying all rules. During test generation,
 strategies iterate over value sets filtered by this function.
 
-\begin{lstlisting}[language=python, caption={Rule evaluation pipeline}, label={lst:rules_eval}]
+\begin{lstlisting}[language=python, caption={Rule evaluation pipeline.}, label={lst:rules_eval}]
 class Machine(object):
     def rules_are_ok(self, values):
         if not self._validated:
             self.validate()
-        value_mapping = dict((v.name, value) for v, value in zip(self.variables, values))
+        value_mapping = dict((v.name, value) 
+                        for v, value in zip(self.variables, values))
         for rule in self.rules:
             if not rule.is_valid(value_mapping=value_mapping):
                 return False
