@@ -1,0 +1,71 @@
+*** Settings ***
+Library    ExampleLibrary.py
+
+*** Machine ***
+${ITEM_TYPE}    any of    electronics    clothing    books
+${QUANTITY}     any of    small   medium   large
+${PAYMENT}      any of    credit   cash
+
+# Simple rules for demonstration
+${QUANTITY} == large  ==>  ${PAYMENT} == credit
+${ITEM_TYPE} == electronics  ==>  ${QUANTITY} != small
+
+Browse
+    Log    Customer browsing: ${ITEM_TYPE}
+  [Actions]
+    add_to_cart    ==>    Cart        when    ${ITEM_TYPE} == electronics
+    add_to_cart    ==>    Cart        when    ${ITEM_TYPE} == clothing
+    add_to_cart    ==>    Cart        when    ${ITEM_TYPE} == books
+
+Cart
+    Log    Items in cart: ${QUANTITY} ${ITEM_TYPE}
+  [Actions]
+    checkout    ==>    Payment    when    ${QUANTITY} != small
+    continue    ==>    Browse     otherwise
+
+Payment
+    Log    Processing payment: ${PAYMENT}
+  [Actions]
+    process_payment    ==>    Success       when    ${PAYMENT} == credit
+    process_payment    ==>    Success       when    ${PAYMENT} == cash
+    process_payment    ==>    Failed        otherwise
+
+Success
+    Log    Payment successful
+  [Actions]
+    continue_shopping    ==>    Browse
+    finish              ==>    End
+
+Failed
+    Log    Payment failed
+  [Actions]
+    retry_payment    ==>    Payment
+    cancel          ==>    Browse
+
+End
+    Log    Shopping completed
+
+*** Keywords ***
+Add To Cart
+    Log    Adding ${QUANTITY} ${ITEM_TYPE} to cart
+
+Checkout
+    Log    Proceeding to checkout
+
+Continue
+    Log    Continuing shopping
+
+Process Payment
+    Log    Processing ${PAYMENT} payment
+
+Continue Shopping
+    Log    Continuing shopping
+
+Finish
+    Log    Finishing shopping
+
+Retry Payment
+    Log    Retrying payment
+
+Cancel
+    Log    Canceling payment

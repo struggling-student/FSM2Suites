@@ -1,0 +1,39 @@
+*** Settings ***
+Library    ExampleLibrary.py
+
+*** Variables ***
+${VALID_USER}      admin
+${INVALID_USER}    hacker
+
+*** Machine ***
+${USERNAME}    any of    ${VALID_USER}    ${INVALID_USER}
+${PASSWORD}    any of    correct_pass     wrong_pass
+
+# Basic implication rule: valid user implies correct password needed
+${USERNAME} == ${VALID_USER}  ==>  ${PASSWORD} == correct_pass
+
+Start
+    Log    Starting login process
+  [Actions]
+    attempt_login    ==>    Success    when    ${USERNAME} == ${VALID_USER}
+    attempt_login    ==>    Failed     otherwise
+
+Success
+    Log    Login successful for user: ${USERNAME}
+  [Actions]
+    logout    ==>    Start
+
+Failed
+    Log    Login failed for user: ${USERNAME}
+  [Actions]
+    retry     ==>    Start
+
+*** Keywords ***
+Attempt Login
+    Log    Attempting login with username: ${USERNAME} and password: ${PASSWORD}
+
+Logout
+    Log    User ${USERNAME} logged out
+
+Retry
+    Log    Retrying login
