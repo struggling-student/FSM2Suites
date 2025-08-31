@@ -2,36 +2,36 @@
 # TEST COVERAGE INFORMATION
 # ============================================================================
 #
-# Covered states (6/8):
+# Covered states (7/8):
 #     Browsing
 #     CartEditing
 #     Checkout
 #     Login
 #     LoginFailed
+#     OrderConfirmed
 #     SessionEnded
 #
-# Covered actions (10/17):
+# Covered actions (12/17):
 #     add product to cart  (Browsing -> CartEditing)
-#     cancel checkout  (Checkout -> CartEditing)
 #     exit application  (LoginFailed -> SessionEnded)
-#     login with credentials  (Login -> Browsing)
 #     login with credentials  (Login -> LoginFailed)
-#     logout  (Browsing -> SessionEnded)
+#     login with credentials  (Login -> Browsing)
+#     logout  (OrderConfirmed -> SessionEnded)
+#     logout  (Checkout -> SessionEnded)
 #     logout  (CartEditing -> SessionEnded)
+#     logout  (Browsing -> SessionEnded)
 #     proceed to checkout  (CartEditing -> Checkout)
+#     process payment  (Checkout -> OrderConfirmed)
 #     return to login  (SessionEnded -> Login)
 #     try login again  (LoginFailed -> Login)
 #
-# Uncovered states (2/8):
-#     OrderConfirmed
+# Uncovered states (1/8):
 #     PaymentFailed
 #
-# Uncovered actions (7/17):
+# Uncovered actions (5/17):
+#     cancel checkout (Checkout -> CartEditing)
 #     cancel order (PaymentFailed -> CartEditing)
-#     logout (OrderConfirmed -> SessionEnded)
 #     logout (PaymentFailed -> SessionEnded)
-#     logout (Checkout -> SessionEnded)
-#     process payment (Checkout -> OrderConfirmed)
 #     process payment (Checkout -> PaymentFailed)
 #     retry payment (PaymentFailed -> Checkout)
 #
@@ -56,13 +56,12 @@ ${INVALID_PASSWORD}    wrongpassword
 Test 1
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
   login with credentials
-  add product to cart          1  1
   logout
   return to login
   login with credentials
   add product to cart          1  1
   proceed to checkout
-  cancel checkout
+  process payment          success
   logout
   return to login
   login with credentials
@@ -70,25 +69,22 @@ Test 1
   logout
   return to login
   login with credentials
-  add product to cart          1  1
   logout
   return to login
   login with credentials
   logout
+  return to login
+  login with credentials
 
 Test 2
   Set Machine Variables  ${INVALID_EMAIL}  ${INVALID_PASSWORD}  failure  2  1
   login with credentials
+  try login again
+  login with credentials
+  try login again
+  login with credentials
   exit application
   return to login
-  login with credentials
-  try login again
-  login with credentials
-  try login again
-  login with credentials
-  try login again
-  login with credentials
-  try login again
   login with credentials
   try login again
   login with credentials
@@ -97,6 +93,10 @@ Test 2
   login with credentials
   exit application
   return to login
+  login with credentials
+  try login again
+  login with credentials
+  try login again
   login with credentials
 
 Test 3
@@ -113,14 +113,14 @@ Test 3
   login with credentials
   try login again
   login with credentials
-  try login again
-  login with credentials
   exit application
   return to login
   login with credentials
   exit application
   return to login
   login with credentials
+  exit application
+  return to login
 
 Test 4
   Set Machine Variables  ${VALID_EMAIL}  ${INVALID_PASSWORD}  success  3  2
@@ -130,26 +130,29 @@ Test 4
   login with credentials
   try login again
   login with credentials
-  exit application
-  return to login
-  login with credentials
   try login again
   login with credentials
   try login again
   login with credentials
   try login again
   login with credentials
-  exit application
-  return to login
+  try login again
   login with credentials
   exit application
   return to login
+  login with credentials
+  try login again
+  login with credentials
+  try login again
 
 Test 5
   Set Machine Variables  ${VALID_EMAIL}  ${INVALID_PASSWORD}  failure  1  2
   login with credentials
   try login again
   login with credentials
+  exit application
+  return to login
+  login with credentials
   try login again
   login with credentials
   exit application
@@ -157,16 +160,13 @@ Test 5
   login with credentials
   try login again
   login with credentials
-  try login again
+  exit application
+  return to login
   login with credentials
   exit application
   return to login
   login with credentials
   try login again
-  login with credentials
-  try login again
-  login with credentials
-  exit application
 
 Test 6
   Set Machine Variables  ${INVALID_EMAIL}  ${VALID_PASSWORD}  success  2  2
@@ -174,11 +174,6 @@ Test 6
   exit application
   return to login
   login with credentials
-  try login again
-  login with credentials
-  exit application
-  return to login
-  login with credentials
   exit application
   return to login
   login with credentials
@@ -189,17 +184,18 @@ Test 6
   login with credentials
   try login again
   login with credentials
+  try login again
+  login with credentials
+  try login again
+  login with credentials
   exit application
+  return to login
 
 Test 7
   Set Machine Variables  ${INVALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  try login again
-  login with credentials
   exit application
   return to login
-  login with credentials
-  try login again
   login with credentials
   exit application
   return to login
@@ -211,16 +207,20 @@ Test 7
   login with credentials
   try login again
   login with credentials
-  exit application
-  return to login
+  try login again
+  login with credentials
+  try login again
+  login with credentials
+  try login again
+  login with credentials
 
 Test 8
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  2
   login with credentials
+  add product to cart          2  2
   logout
   return to login
   login with credentials
-  add product to cart          2  2
   logout
   return to login
   login with credentials
@@ -240,12 +240,7 @@ Test 8
 Test 9
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  3  1
   login with credentials
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
+  add product to cart          3  1
   logout
   return to login
   login with credentials
@@ -256,9 +251,14 @@ Test 9
   logout
   return to login
   login with credentials
+  add product to cart          3  1
+  proceed to checkout
   logout
   return to login
   login with credentials
+  add product to cart          3  1
+  proceed to checkout
+  logout
 
 *** Keywords ***
 Set Machine Variables

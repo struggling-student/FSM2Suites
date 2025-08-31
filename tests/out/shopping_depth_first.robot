@@ -14,9 +14,9 @@
 #     add product to cart  (Browsing -> CartEditing)
 #     cancel checkout  (Checkout -> CartEditing)
 #     login with credentials  (Login -> Browsing)
-#     logout  (OrderConfirmed -> SessionEnded)
-#     logout  (CartEditing -> SessionEnded)
 #     logout  (Browsing -> SessionEnded)
+#     logout  (CartEditing -> SessionEnded)
+#     logout  (OrderConfirmed -> SessionEnded)
 #     logout  (Checkout -> SessionEnded)
 #     proceed to checkout  (CartEditing -> Checkout)
 #     process payment  (Checkout -> OrderConfirmed)
@@ -58,67 +58,16 @@ Test 1
   login with credentials
   add product to cart          1  1
   proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
 
 Test 2
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
   login with credentials
   add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
   logout
 
 Test 3
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
   logout
   return to login
 
@@ -131,42 +80,16 @@ Test 4
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
 
 Test 5
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
   login with credentials
   add product to cart          1  1
   proceed to checkout
-  process payment          success
+  cancel checkout
+  proceed to checkout
   logout
   return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
 
 Test 6
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
@@ -180,16 +103,6 @@ Test 6
   add product to cart          1  1
   proceed to checkout
   process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  logout
 
 Test 7
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
@@ -202,17 +115,7 @@ Test 7
   login with credentials
   add product to cart          1  1
   proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
   cancel checkout
-  proceed to checkout
-  cancel checkout
-  logout
-  return to login
 
 Test 8
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
@@ -225,17 +128,7 @@ Test 8
   login with credentials
   add product to cart          1  1
   proceed to checkout
-  process payment          success
   logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  logout
-  return to login
-  login with credentials
 
 Test 9
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
@@ -247,18 +140,8 @@ Test 9
   return to login
   login with credentials
   add product to cart          1  1
-  proceed to checkout
-  process payment          success
   logout
   return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
 
 Test 10
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
@@ -269,19 +152,9 @@ Test 10
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  logout
-  return to login
-  login with credentials
-  logout
 
 Test 11
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
@@ -300,11 +173,11 @@ Test 11
   login with credentials
   add product to cart          1  1
   proceed to checkout
+  process payment          success
   logout
   return to login
   login with credentials
   add product to cart          1  1
-  proceed to checkout
 
 Test 12
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
@@ -323,10 +196,10 @@ Test 12
   login with credentials
   add product to cart          1  1
   proceed to checkout
+  process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
   logout
 
 Test 13
@@ -346,9 +219,9 @@ Test 13
   login with credentials
   add product to cart          1  1
   proceed to checkout
-  logout
-  return to login
-  login with credentials
+  cancel checkout
+  proceed to checkout
+  process payment          success
   logout
   return to login
 
@@ -368,12 +241,10 @@ Test 14
   return to login
   login with credentials
   add product to cart          1  1
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
   proceed to checkout
-  process payment          success
+  cancel checkout
+  proceed to checkout
+  cancel checkout
 
 Test 15
   Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
@@ -391,817 +262,479 @@ Test 15
   return to login
   login with credentials
   add product to cart          1  1
+  proceed to checkout
+  cancel checkout
+  proceed to checkout
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
 
 Test 16
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  logout
 
 Test 17
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
+  add product to cart          1  2
   logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  logout
-  return to login
 
 Test 18
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  logout
-  return to login
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
   logout
   return to login
-  login with credentials
 
 Test 19
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
 
 Test 20
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   cancel checkout
   proceed to checkout
+  process payment          success
+  logout
 
 Test 21
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   cancel checkout
-  logout
+  proceed to checkout
+  cancel checkout
 
 Test 22
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
+  cancel checkout
   proceed to checkout
   logout
   return to login
 
 Test 23
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
+  cancel checkout
   logout
   return to login
   login with credentials
 
 Test 24
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
 
 Test 25
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  logout
+  cancel checkout
 
 Test 26
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
   logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
 
 Test 27
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
+  add product to cart          1  2
   logout
   return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
 
 Test 28
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
 
 Test 29
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
-  cancel checkout
-  proceed to checkout
+  process payment          success
   logout
+  return to login
+  login with credentials
+  add product to cart          1  2
 
 Test 30
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
-  cancel checkout
+  process payment          success
   logout
   return to login
+  login with credentials
+  logout
 
 Test 31
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
+  proceed to checkout
+  process payment          success
+  logout
+  return to login
+  login with credentials
+  add product to cart          1  2
   proceed to checkout
   cancel checkout
   proceed to checkout
   process payment          success
   logout
   return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  logout
-  return to login
-  login with credentials
 
 Test 32
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
+  proceed to checkout
+  process payment          success
+  logout
+  return to login
+  login with credentials
+  add product to cart          1  2
   proceed to checkout
   cancel checkout
   proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
+  cancel checkout
 
 Test 33
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  2
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          1  2
+  proceed to checkout
+  process payment          success
+  logout
+  return to login
+  login with credentials
+  add product to cart          1  2
   proceed to checkout
   cancel checkout
   proceed to checkout
-  process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  logout
-  return to login
-  login with credentials
-  logout
 
 Test 34
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
 
 Test 35
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   logout
 
 Test 36
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
-  return to login
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
   logout
   return to login
 
 Test 37
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
 
 Test 38
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
+  add product to cart          2  1
   proceed to checkout
   cancel checkout
   proceed to checkout
   process payment          success
   logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
 
 Test 39
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   cancel checkout
   proceed to checkout
   cancel checkout
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  logout
 
 Test 40
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   cancel checkout
   proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
   logout
   return to login
 
 Test 41
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
   logout
   return to login
   login with credentials
 
 Test 42
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
+  add product to cart          2  1
   proceed to checkout
   process payment          success
-  logout
-  return to login
-  login with credentials
-  add product to cart          1  1
 
 Test 43
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
-  logout
-  return to login
-  login with credentials
-  logout
 
 Test 44
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
   logout
-  return to login
 
 Test 45
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  process payment          success
+  add product to cart          2  1
+  logout
+  return to login
 
 Test 46
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
+  logout
+  return to login
+  login with credentials
 
 Test 47
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
+  process payment          success
   logout
+  return to login
+  login with credentials
+  add product to cart          2  1
+  proceed to checkout
+  process payment          success
+  logout
+  return to login
+  login with credentials
+  add product to cart          2  1
 
 Test 48
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
+  process payment          success
   logout
   return to login
+  login with credentials
+  add product to cart          2  1
+  proceed to checkout
+  process payment          success
+  logout
+  return to login
+  login with credentials
+  logout
 
 Test 49
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
+  process payment          success
   logout
   return to login
   login with credentials
+  add product to cart          2  1
+  proceed to checkout
+  cancel checkout
+  proceed to checkout
+  process payment          success
+  logout
+  return to login
 
 Test 50
-  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  1  1
+  Set Machine Variables  ${VALID_EMAIL}  ${VALID_PASSWORD}  success  2  1
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
   process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
   proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
-  proceed to checkout
-  cancel checkout
+  process payment          success
   logout
   return to login
   login with credentials
-  add product to cart          1  1
+  add product to cart          2  1
+  proceed to checkout
+  cancel checkout
+  proceed to checkout
+  cancel checkout
 
 *** Keywords ***
 Set Machine Variables
