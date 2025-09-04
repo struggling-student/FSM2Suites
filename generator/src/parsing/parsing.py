@@ -145,10 +145,10 @@ action.setParseAction(lambda t: Action(t.robo_step.strip(),
                                       t.condition if t.condition else None, 
                                       t.args if hasattr(t, 'args') and t.args else []))
 
-actions = action_header + ZeroOrMore(action).setResultsName('actions')
-actions = Optional(actions)
+action_list = ZeroOrMore(action)
+actions = action_header + action_list.setResultsName('action_list')
+actions = Optional(actions).setResultsName('actions')
 actions.leaveWhitespace()
-actions.setResultsName('actions')
 
 comment = Regex(r'(^\s*\#[^\n]*\n)|(\s\s+\#[^\n]*(?=\n))|(\n\s*\#[^\n]*)')
 comment.leaveWhitespace()
@@ -162,7 +162,9 @@ rules.setParseAction(lambda t: [t[i] for i in range(len(t)) if i % 2 == 0])
 
 single_state = state_name + end_of_line + steps + actions
 single_state.leaveWhitespace()
-single_state.setParseAction(lambda p: State(p.state_name, list(p.steps) if p.steps else [], list(p.actions) if p.actions else []))
+single_state.setParseAction(lambda p: State(p.state_name, 
+                                           list(p.steps) if p.steps else [], 
+                                           [item for item in p.actions if hasattr(item, 'name') and hasattr(item, '_next_state_name')]))
 
 states_section = single_state + ZeroOrMore(ZeroOrMore(LineEnd()) + single_state)
 states_section.setResultsName('states')
