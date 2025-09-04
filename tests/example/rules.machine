@@ -1,0 +1,233 @@
+*** Settings ***
+Library         ../ExampleLibrary.py
+
+*** Machine ***
+
+${TEMPERATURE}    any of    15    20    25    30    35    40
+${HUMIDITY}       any of    30    40    50    60    70    80    90
+${PRESSURE}       any of    990    1000    1010    1020    1030
+${STATUS}         any of    normal    warning    critical    emergency
+${SENSOR_ID}      any of    temp01    temp02    humid01    humid02    press01
+${MODE}           any of    auto    manual    maintenance    test
+${ALERT_LEVEL}    any of    0    1    2    3    4    5
+${RESPONSE_TIME}  any of    100    200    500    1000    2000
+${SYSTEM_LOAD}    any of    low    medium    high    critical
+
+Normal
+  [Actions]
+    continue monitoring  ==>  Monitoring
+    schedule maintenance  ==>  Monitoring      when  ${MODE} == maintenance
+    run diagnostics      ==>  Monitoring      when  ${ALERT_LEVEL} == 0
+
+Warning
+  [Actions]
+    review warning      ==>  Monitoring      when  ${ALERT_LEVEL} <= 2
+    escalate warning    ==>  Alert           when  ${ALERT_LEVEL} > 2
+    investigate issue   ==>  Monitoring      when  ${SENSOR_ID} ~ temp.* and ${TEMPERATURE} > 30
+
+Alert
+  [Actions]
+    acknowledge alert   ==>  Monitoring      when  ${ALERT_LEVEL} <= 3
+    escalate alert      ==>  Critical        when  ${ALERT_LEVEL} > 3
+    emergency protocol  ==>  Monitoring      when  ${STATUS} == emergency
+
+Critical
+  [Actions]
+    emergency shutdown  ==>  Shutdown        when  ${SYSTEM_LOAD} == critical
+    manual override     ==>  Monitoring      when  ${MODE} == manual
+    crisis management   ==>  Monitoring      when  ${ALERT_LEVEL} >= 4
+
+Shutdown
+  [Actions]
+    restart system      ==>  Start           when  ${STATUS} == normal
+    maintenance mode    ==>  Monitoring      when  ${MODE} == maintenance
+
+Start
+  [Actions]
+    initialize system   ==>  Initialization
+
+Initialization
+  [Actions]
+    check sensors       ==>  Monitoring      when  ${STATUS} == normal
+    calibrate system    ==>  Monitoring      when  ${MODE} == maintenance
+    start diagnostics   ==>  Monitoring      when  ${MODE} == test
+    emergency mode      ==>  Monitoring      when  ${STATUS} == emergency
+
+Monitoring
+  [Actions]
+    # Test equality conditions (==)
+    read temperature    ==>  Normal          when  ${TEMPERATURE} == 25 and ${STATUS} == normal
+    read temperature    ==>  Warning         when  ${TEMPERATURE} == 30 and ${STATUS} == warning
+    
+    # Test inequality conditions (!=) 
+    read humidity       ==>  Alert           when  ${HUMIDITY} != 50 and ${SENSOR_ID} != temp01
+    
+    # Test greater than conditions (>)
+    monitor pressure    ==>  Alert           when  ${PRESSURE} > 1020
+    check load          ==>  Alert           when  ${ALERT_LEVEL} > 3
+    
+    # Test greater than or equal conditions (>=)
+    read temperature    ==>  Alert           when  ${TEMPERATURE} >= 35
+    monitor response    ==>  Warning         when  ${RESPONSE_TIME} >= 1000
+    
+    # Test less than conditions (<)
+    check pressure      ==>  Alert           when  ${PRESSURE} < 1000
+    monitor alerts      ==>  Normal          when  ${ALERT_LEVEL} < 2
+    
+    # Test less than or equal conditions (<=)
+    read temperature    ==>  Normal          when  ${TEMPERATURE} <= 20
+    check humidity      ==>  Normal          when  ${HUMIDITY} <= 40
+    
+    # Test regex conditions (~)
+    sensor check        ==>  Normal          when  ${SENSOR_ID} ~ temp.*
+    sensor check        ==>  Normal          when  ${SENSOR_ID} ~ humid.*
+    
+    # Test negated regex conditions (!~)
+    validate sensor     ==>  Alert           when  ${SENSOR_ID} !~ press.*
+    
+    # Test complex AND conditions
+    full check          ==>  Normal          when  ${TEMPERATURE} >= 20 and ${TEMPERATURE} <= 30 and ${HUMIDITY} >= 40 and ${HUMIDITY} <= 70
+    system validation   ==>  Normal          when  ${PRESSURE} >= 1000 and ${PRESSURE} <= 1020 and ${STATUS} == normal and ${MODE} == auto
+    
+    # Test complex OR conditions  
+    alert check         ==>  Alert           when  ${TEMPERATURE} > 35 or ${TEMPERATURE} < 15 or ${HUMIDITY} > 80 or ${HUMIDITY} < 30
+    mode switch         ==>  Normal          when  ${MODE} == manual or ${MODE} == maintenance or ${SYSTEM_LOAD} == critical
+    
+    # Test NOT conditions (implemented via negation)
+    safety check        ==>  Normal          when  ${STATUS} != emergency and ${ALERT_LEVEL} <= 2
+    
+    # Complex nested conditions
+    advanced check      ==>  Warning         when  (${TEMPERATURE} > 25 and ${HUMIDITY} < 60) or (${PRESSURE} > 1015 and ${MODE} == auto)
+
+*** Keywords ***
+Initialize System
+    Log    Initializing system components
+
+Check Sensors
+    Log    Checking all sensors - Temperature: ${TEMPERATURE}, Humidity: ${HUMIDITY}, Pressure: ${PRESSURE}
+
+Calibrate System
+    Log    Calibrating system for maintenance mode
+
+Start Diagnostics
+    Log    Starting diagnostic procedures
+
+Emergency Mode
+    Log    Entering emergency mode
+
+Read Temperature
+    Log    Reading temperature sensor: ${TEMPERATURE}°C from ${SENSOR_ID}
+
+Read Humidity
+    Log    Reading humidity sensor: ${HUMIDITY}% from ${SENSOR_ID}
+
+Monitor Pressure
+    Log    Monitoring pressure: ${PRESSURE} hPa
+
+Check Load
+    Log    System load check: ${SYSTEM_LOAD}, Alert level: ${ALERT_LEVEL}
+
+Monitor Response
+    Log    Response time monitoring: ${RESPONSE_TIME}ms
+
+Check Pressure
+    Log    Pressure check: ${PRESSURE} hPa
+
+Monitor Alerts
+    Log    Alert monitoring: Level ${ALERT_LEVEL}
+
+Check Humidity
+    Log    Humidity check: ${HUMIDITY}%
+
+Sensor Check
+    Log    Sensor validation: ${SENSOR_ID}
+
+Validate Sensor
+    Log    Sensor validation for ${SENSOR_ID}
+
+Full Check
+    Log    Full system check - Temp: ${TEMPERATURE}, Humidity: ${HUMIDITY}, Status: ${STATUS}
+
+System Validation
+    Log    System validation - Pressure: ${PRESSURE}, Status: ${STATUS}, Mode: ${MODE}
+
+Alert Check
+    Log    Alert system check - monitoring critical parameters
+
+Mode Switch
+    Log    Mode switching - Current: ${MODE}, Load: ${SYSTEM_LOAD}
+
+Safety Check
+    Log    Safety validation - Status: ${STATUS}, Alert: ${ALERT_LEVEL}
+
+Advanced Check
+    Log    Advanced system analysis
+
+Continue Monitoring
+    Log    Continuing normal monitoring operations
+
+Schedule Maintenance
+    Log    Scheduling maintenance procedures
+
+Run Diagnostics
+    Log    Running system diagnostics
+
+Review Warning
+    Log    Reviewing warning conditions
+
+Escalate Warning
+    Log    Escalating warning to alert level
+
+Investigate Issue
+    Log    Investigating issue with ${SENSOR_ID}
+
+Acknowledge Alert
+    Log    Alert acknowledged - Level: ${ALERT_LEVEL}
+
+Escalate Alert
+    Log    Escalating alert to critical level
+
+Emergency Protocol
+    Log    Activating emergency protocols
+
+Emergency Shutdown
+    Log    Emergency shutdown initiated
+
+Manual Override
+    Log    Manual override activated - Mode: ${MODE}
+
+Crisis Management
+    Log    Crisis management procedures activated
+
+Emergency Stop
+    Log    Emergency stop procedure
+
+Activate Backup
+    Log    Activating backup systems
+
+Full Reset
+    Log    Performing full system reset
+
+Restart System
+    Log    System restart initiated
+
+Maintenance Mode
+    Log    Entering maintenance mode
+
+Calibrate Sensors
+    Log    Calibrating sensor systems
+
+Run Tests
+    Log    Running test procedures
+
+Complete Maintenance
+    Log    Maintenance procedures completed
+
+Test Sensors
+    Log    Testing all sensor systems
+
+Analyze Performance
+    Log    Analyzing system performance - Response: ${RESPONSE_TIME}ms
+
+Generate Report
+    Log    Generating system report

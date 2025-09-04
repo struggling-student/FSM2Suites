@@ -1,6 +1,6 @@
 """
-Invoke tasks for generating Robot Framework tests from example machine files.
-This script creates organized examples for oral exam demonstrations.
+Invoke tasks for generating comprehensive rules test files
+using the comprehensive_rules.machine file with Random Strategy.
 """
 
 from invoke import task
@@ -10,39 +10,87 @@ import glob
 from pathlib import Path
 from io import StringIO
 
-# Add the parent directory to the path so we can import the generator modules
+# Add the generator source to the path
 current_dir = Path(__file__).parent
-parent_dir = current_dir.parent.parent
-sys.path.insert(0, str(parent_dir))
+generator_dir = current_dir.parent.parent / "generator" / "src"
+sys.path.insert(0, str(generator_dir))
 
 # Import after path modification
 try:
-    from generator.src.parsing import parse
-    from generator.src.generation import Generator
-    from generator.src.generation import DepthFirstSearchStrategy, RandomStrategy, AllPairsRandomStrategy
-except ImportError as e:
+    # Create a module namespace that mimics the generator package structure
+    import types
+    
+    # Create core module namespace
+    core_module = types.ModuleType('core')
+    sys.modules['core'] = core_module
+    
+    # Load rules module
+    with open(generator_dir / "core" / "rules.py", 'r') as f:
+        rules_code = f.read()
+    exec(compile(rules_code, str(generator_dir / "core" / "rules.py"), 'exec'), vars(core_module))
+    
+    # Load model module
+    with open(generator_dir / "core" / "model.py", 'r') as f:
+        model_code = f.read()
+    exec(compile(model_code, str(generator_dir / "core" / "model.py"), 'exec'), vars(core_module))
+    
+    # Create parsing module namespace
+    parsing_module = types.ModuleType('parsing')
+    sys.modules['parsing'] = parsing_module
+    
+    # Load parsing module with modified imports
+    with open(generator_dir / "parsing" / "parsing.py", 'r') as f:
+        parsing_code = f.read()
+        # Replace relative imports with absolute
+        parsing_code = parsing_code.replace('from ..core.model import', 'from core import')
+        parsing_code = parsing_code.replace('from ..core.rules import', 'from core import')
+    
+    exec(compile(parsing_code, str(generator_dir / "parsing" / "parsing.py"), 'exec'), vars(parsing_module))
+    
+    # Create generation module namespace
+    generation_module = types.ModuleType('generation')
+    sys.modules['generation'] = generation_module
+    
+    # Load strategies
+    with open(generator_dir / "generation" / "strategies.py", 'r') as f:
+        strategies_code = f.read()
+    exec(compile(strategies_code, str(generator_dir / "generation" / "strategies.py"), 'exec'), vars(generation_module))
+    
+    # Load generator with modified imports
+    with open(generator_dir / "generation" / "generator.py", 'r') as f:
+        generator_code = f.read()
+        # Replace relative imports
+        generator_code = generator_code.replace('from ..parsing.parsing import', 'from parsing import')
+        generator_code = generator_code.replace('from .strategies import', 'from generation import')
+    
+    exec(compile(generator_code, str(generator_dir / "generation" / "generator.py"), 'exec'), vars(generation_module))
+    
+    # Extract the classes and functions we need
+    parse = parsing_module.parse
+    Generator = generation_module.Generator
+    RandomStrategy = generation_module.RandomStrategy
+    
+except Exception as e:
     print(f"Error importing modules: {e}")
     print("Make sure you're running from the correct directory")
+    import traceback
+    traceback.print_exc()
     sys.exit(1)
 
 
-def get_machine_files():
-    """Get all .machine files in the current directory."""
-    return sorted(Path(current_dir).glob("*.machine"))
-
-
-def load_machine(machine_file):
-    """Load a machine from file."""
+def load_comprehensive_rules_machine():
+    """Load the comprehensive rules machine."""
+    machine_file = current_dir / "rules.machine"
     with open(machine_file, 'r') as f:
         content = f.read()
     return parse(content)
 
 
-def generate_robot_file(machine_file, strategy_class, output_dir):
-    """Generate a Robot Framework test file for the given strategy and machine."""
+def generate_robot_file(strategy_class, output_filename, max_tests=50, max_actions=50):
+    """Generate a Robot Framework test file for the given strategy with specified limits."""
     try:
         # Load the machine
-        machine = load_machine(machine_file)
+        machine = load_comprehensive_rules_machine()
         
         # Collect all actions for coverage tracking
         all_actions = set()
@@ -51,14 +99,9 @@ def generate_robot_file(machine_file, strategy_class, output_dir):
                 action._parent_state = state
                 all_actions.add(action)
         
-        # Generate tests
+        # Generate tests with specified limits
         generator = Generator()
         output = StringIO()
-        
-        # Determine test parameters based on machine complexity
-        max_tests = 3
-        max_actions = 6
-        
         generator.generate(
             machine, 
             max_tests=max_tests, 
@@ -70,180 +113,109 @@ def generate_robot_file(machine_file, strategy_class, output_dir):
         
         result = output.getvalue()
         
-        # Create output filename
-        machine_name = machine_file.stem
-        strategy_name = strategy_class.__name__.replace('Strategy', '').lower()
-        output_filename = f"{machine_name}_{strategy_name}.robot"
+        # Create Robot Framework file with proper header
+        full_content = f"""{result}"""
         
-        # Save to file in output directory
+        # Create output directory if it doesn't exist
+        output_dir = current_dir / "out"
+        output_dir.mkdir(exist_ok=True)
+        
+        # Save to file in the out directory
         output_file = output_dir / output_filename
         with open(output_file, 'w') as f:
-            f.write(result)
+            f.write(full_content)
         
-        return output_filename
+        print(f"✅ Generated: out/{output_filename}")
+        print(f"   📊 Max Tests: {max_tests}, Max Actions: {max_actions}")
+        return True
         
     except Exception as e:
-        print(f"❌ Error generating {machine_file.name} with {strategy_class.__name__}: {e}")
-        return None
+        print(f"❌ Error generating {output_filename}: {e}")
+        return False
 
 
 @task
-def generate(ctx, machine=None, strategy=None):
+def generate_random(ctx):
     """
-    Generate Robot Framework test files for example machines.
+    Generate Robot Framework test file using Random Strategy.
     
-    Args:
-        machine: Specific machine file to process (optional, defaults to all)
-        strategy: Specific strategy to use (dfs, random, allpairs, defaults to all)
+    Creates:
+    - comprehensive_rules_random.robot (Random Strategy with max 50 tests, 50 actions)
     
-    Creates organized output in subdirectories:
-    - out/01_basic_login/        - Basic login examples
-    - out/02_complex_permissions/ - Complex permission rules  
-    - out/03_shopping_cart/      - Shopping cart with comparisons
-    - out/04_user_registration/  - User registration with regex
-    - out/05_complex_parsing/    - Complex state machine parsing
-    - out/06_logical_operators/  - Logical operator demonstrations
-    
-    Examples:
-        inv generate                           # Generate all examples
-        inv generate --machine=01_basic_login  # Generate specific machine
-        inv generate --strategy=dfs            # Use only depth-first strategy
+    Example:
+        inv generate-random
     """
-    print("🚀 Generating Robot Framework examples for oral exam")
+    print("🚀 Generating Robot Framework test file using Random Strategy")
+    print("=" * 70)
+    print("📋 Configuration:")
+    print("   • Strategy: Random")
+    print("   • Max Tests: 50")
+    print("   • Max Actions: 50")
+    print("   • Machine: comprehensive_rules.machine")
     print("=" * 70)
     
-    # Get machine files to process
-    machine_files = get_machine_files()
-    if machine:
-        machine_files = [f for f in machine_files if machine in f.name]
-        if not machine_files:
-            print(f"❌ No machine file found matching: {machine}")
-            return
+    filename = "comprehensive_rules_random.robot"
+    strategy_name = "Random"
     
-    # Define strategies to use
-    strategies = [
-        (DepthFirstSearchStrategy, "dfs", "Depth-First Search"),
-        (RandomStrategy, "random", "Random"),
-        (AllPairsRandomStrategy, "allpairs", "All-Pairs")
-    ]
-    
-    if strategy:
-        strategies = [s for s in strategies if strategy in s[1]]
-        if not strategies:
-            print(f"❌ No strategy found matching: {strategy}")
-            return
-    
-    total_generated = 0
-    
-    for machine_file in machine_files:
-        print(f"\n📁 Processing: {machine_file.name}")
-        print(f"   Description: {get_machine_description(machine_file)}")
-        
-        # Create output directory for this machine
-        machine_name = machine_file.stem
-        output_dir = current_dir / "out" / machine_name
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
-        generated_files = []
-        
-        for strategy_class, strategy_short, strategy_name in strategies:
-            print(f"   🔄 Generating {strategy_name} strategy...")
-            try:
-                filename = generate_robot_file(machine_file, strategy_class, output_dir)
-                if filename:
-                    generated_files.append(filename)
-                    total_generated += 1
-                    print(f"      ✅ Generated: {machine_name}/{filename}")
-            except AssertionError as e:
-                if "AllPairs does not work correctly with rules" in str(e):
-                    print(f"      ⚠️  {strategy_name} strategy skipped: Cannot be used with machines that have rules")
-                else:
-                    print(f"      ❌ Error with {strategy_name} strategy: {e}")
-            except Exception as e:
-                print(f"      ❌ Error with {strategy_name} strategy: {e}")
-        
-        # Files generated successfully
+    print(f"\n🔄 Generating {strategy_name} strategy...")
+    success = generate_robot_file(RandomStrategy, filename, max_tests=50, max_actions=50)
     
     print("\n" + "=" * 70)
-    print(f"✅ Generation Complete! Generated {total_generated} files")
-    
-    if total_generated > 0:
-        print("\n📂 Generated examples:")
-        for machine_file in machine_files:
-            machine_name = machine_file.stem
-            output_dir = current_dir / "out" / machine_name
-            if output_dir.exists():
-                robot_files = list(output_dir.glob("*.robot"))
-                if robot_files:
-                    print(f"   📁 {machine_name}/")
-                    for robot_file in sorted(robot_files):
-                        print(f"      🤖 {robot_file.name}")
-        
-        print("\n🚀 Generated examples for oral exam presentation:")
-        print("   cd tests/example")
-        print("   inv generate                    # Generate all examples")
-        print("   inv generate --machine=01       # Generate specific machine")
+    if success:
+        print("✅ Generation Complete!")
+        print("\n📋 Generated file:")
+        print(f"   • out/{filename}")
+        print("\n🚀 Run the generated test:")
+        print(f"   robot out/{filename}")
+        print("\n📊 Coverage Analysis:")
+        print("   Check the generated file for test coverage information")
+    else:
+        print("❌ Generation failed!")
 
 
-def get_machine_description(machine_file):
-    """Get a description of what the machine demonstrates."""
-    descriptions = {
-        "01_basic_login_fixed": "Basic login system with simple implication rules", 
-        "07_simple_shopping": "Simple shopping cart with comparison operators",
-        "08_logical_simple": "Logical operators and rules demonstration"
-    }
+@task
+def generate(ctx):
+    """
+    Alias for generate-random task.
     
-    for key, desc in descriptions.items():
-        if key in machine_file.name:
-            return desc
-    return "Example machine file"
+    Example:
+        inv generate
+    """
+    generate_random(ctx)
 
 
 @task
 def clean(ctx):
     """
-    Clean up generated Robot Framework test files and output directories.
+    Clean up generated Robot Framework test files.
     
     Removes:
-    - out/ directory and all contents
+    - comprehensive_rules_*.robot files
     - Python cache files
-    - Robot Framework logs and reports
     
     Example:
         inv clean
     """
     print("🧹 Cleaning up generated files...")
     
-    removed_count = 0
-    
-    # Remove output directory
-    out_dir = current_dir / "out" 
-    if out_dir.exists():
-        import shutil
-        shutil.rmtree(out_dir)
-        removed_count += 1
-        print("   🗑️  Removed: out/ directory")
-    
-    # Remove Robot Framework output files
-    rf_files = []
-    rf_files.extend(glob.glob("*.html"))
-    rf_files.extend(glob.glob("*.xml"))
-    rf_files.extend(glob.glob("log.html"))
-    rf_files.extend(glob.glob("report.html"))
-    rf_files.extend(glob.glob("output.xml"))
-    
-    for rf_file in rf_files:
-        try:
-            os.remove(rf_file)
-            removed_count += 1
-            print(f"   🗑️  Removed: {rf_file}")
-        except OSError:
-            pass
-    
-    # Remove Python cache files
+    # Remove generated .robot files from out directory
+    out_dir = current_dir / "out"
+    robot_files = list(out_dir.glob("comprehensive_rules_*.robot")) if out_dir.exists() else []
     pyc_files = glob.glob("**/*.pyc", recursive=True)
     pycache_dirs = glob.glob("**/__pycache__", recursive=True)
     
+    removed_count = 0
+    
+    # Remove generated robot files
+    for robot_file in robot_files:
+        try:
+            robot_file.unlink()
+            removed_count += 1
+            print(f"   🗑️  Removed: out/{robot_file.name}")
+        except OSError:
+            pass
+    
+    # Remove cache files
     for pyc_file in pyc_files:
         try:
             os.remove(pyc_file)
@@ -266,60 +238,86 @@ def clean(ctx):
 
 
 @task
-def list_examples(ctx):
+def info(ctx):
     """
-    List all available example machine files with descriptions.
+    Show information about the comprehensive rules machine.
+    
+    Example:
+        inv info
     """
-    print("📋 Available Example Machine Files")
+    print("📊 Comprehensive Rules Machine Information")
     print("=" * 50)
     
-    machine_files = get_machine_files()
-    
-    if not machine_files:
-        print("❌ No machine files found")
-        return
-    
-    for machine_file in machine_files:
-        print(f"\n📁 {machine_file.name}")
-        print(f"   📝 {get_machine_description(machine_file)}")
+    try:
+        machine = load_comprehensive_rules_machine()
         
-        # Try to parse and show basic info
-        try:
-            machine = load_machine(machine_file)
-            print(f"   📊 {len(machine.variables)} variables, {len(machine.states)} states, {len(machine.rules)} rules")
-        except Exception as e:
-            print(f"   ❌ Parse error: {e}")
+        print("📁 Machine File: rules.machine")
+        print(f"🏭 States: {len(machine.states)}")
+        print(f"🔧 Variables: {len(machine.variables)}")
+        print(f"📜 Rules: {len(machine.rules)}")
+        
+        print("\n🏭 States:")
+        for state in machine.states:
+            action_count = len(state._actions)
+            print(f"   • {state.name} ({action_count} actions)")
+            for action in state._actions:
+                print(f"     - {action.name} -> {action._next_state_name}")
+        
+        print("\n🔧 Variables:")
+        for var in machine.variables:
+            value_count = len(var.values)
+            print(f"   • {var.name} ({value_count} values)")
+        
+        if machine.rules:
+            print("\n📜 Rules:")
+            for i, rule in enumerate(machine.rules, 1):
+                print(f"   • Rule {i}: {rule}")
+        
+        print("\n🎯 Generation Configuration:")
+        print("   • Strategy: Random")
+        print("   • Max Tests: 50")
+        print("   • Max Actions: 50")
+        
+    except Exception as e:
+        print(f"❌ Error loading machine: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 @task(default=True)
 def help(ctx):
     """
-    Show available tasks and usage information for oral exam examples.
+    Show available tasks and usage information.
     """
-    print("🎓 Oral Exam Examples - Test Generation Tasks")
+    print("🔬 Comprehensive Rules Machine - Test Generation Tasks")
     print("=" * 60)
     print()
-    print("📁 Example Machine Files:")
-    print("  01_basic_login_fixed.machine     - Basic login with implication rules")
-    print("  07_simple_shopping.machine       - Shopping cart with comparison operators")
-    print("  08_logical_simple.machine        - Logical operators and rules demonstration")
+    print("Available tasks:")
+    print("  inv generate         - Generate Robot Framework test file (Random Strategy)")
+    print("  inv generate-random  - Generate test file using Random Strategy")
+    print("  inv clean            - Clean up generated test files")
+    print("  inv info             - Show machine information")
+    print("  inv help             - Show this help message")
     print()
-    print("🚀 Available Tasks:")
-    print("  inv generate                  - Generate Robot Framework tests")
-    print("  inv generate --machine=01     - Generate specific machine")
-    print("  inv generate --strategy=dfs   - Use specific strategy")
-    print("  inv clean                     - Remove generated files")
-    print("  inv list-examples             - List all examples")
-    print("  inv help                      - Show this help")
+    print("Configuration:")
+    print("  • Strategy: Random")
+    print("  • Max Tests: 50")
+    print("  • Max Actions: 50")
+    print("  • Machine: comprehensive_rules.machine")
     print()
-    print("🎯 Demonstration Focus Areas:")
-    print("  • Rule Logic: Implication rules and logical operators")
-    print("  • Parsing: State machines with various constructs")
-    print("  • Strategies: Different test generation approaches")
-    print("  • Comparison: Numerical comparison operators")
+    print("Generated files:")
+    print("  • out/comprehensive_rules_random.robot  - Random Strategy tests")
     print()
-    print("💡 Usage Examples:")
-    print("  inv generate                          # Generate all examples")
-    print("  inv generate --machine=01_basic       # Focus on basic login")
-    print("  inv generate --strategy=random        # Use random strategy")
-    print("  inv clean                             # Clean up generated files")
+    print("Usage:")
+    print("  inv generate              # Generate test file with Random Strategy")
+    print("  inv clean                 # Remove generated files")
+    print("  inv info                  # Show machine details")
+    print()
+    print("Running tests:")
+    print("  robot out/comprehensive_rules_random.robot    # Run generated tests")
+    print()
+    print("Features:")
+    print("  ✅ Random test generation with rule support")
+    print("  ✅ Comprehensive variable condition testing")
+    print("  ✅ Coverage analysis and reporting")
+    print("  ✅ Maximum test and action limits (50 each)")
