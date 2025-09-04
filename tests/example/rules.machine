@@ -51,6 +51,8 @@ Initialization
     calibrate system    ==>  Monitoring      when  ${MODE} == maintenance
     start diagnostics   ==>  Monitoring      when  ${MODE} == test
     emergency mode      ==>  Monitoring      when  ${STATUS} == emergency
+    crisis response     ==>  Monitoring      when  ${STATUS} == critical
+    warning response    ==>  Monitoring      when  ${STATUS} == warning
 
 Monitoring
   [Actions]
@@ -112,6 +114,12 @@ Start Diagnostics
 
 Emergency Mode
     Log    Entering emergency mode
+
+Crisis Response
+    Log    Responding to critical system status
+
+Warning Response
+    Log    Responding to warning system status
 
 Read Temperature
     Log    Reading temperature sensor: ${TEMPERATURE}°C from ${SENSOR_ID}

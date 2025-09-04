@@ -160,3 +160,11 @@ class ExampleLibrary:
     def advanced_check(self):
         """Perform advanced system analysis."""
         self.log("Performing advanced system analysis")
+    
+    def crisis_response(self):
+        """Respond to critical system status."""
+        self.log("Responding to critical system status")
+    
+    def warning_response(self):
+        """Respond to warning system status."""
+        self.log("Responding to warning system status")
