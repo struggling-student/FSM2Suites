@@ -43,7 +43,6 @@ Critical
 
 Shutdown
   [Actions]
-    restart system      ==>  Start           when  ${STATUS} == normal
     maintenance mode    ==>  Monitoring      when  ${MODE} == maintenance
 
 Initialization
@@ -57,7 +56,6 @@ Monitoring
   [Actions]
     # Test equality conditions (==)
     read temperature    ==>  Normal          when  ${TEMPERATURE} == 25 and ${STATUS} == normal
-    read temperature    ==>  Warning         when  ${TEMPERATURE} == 30 and ${STATUS} == warning
     
     # Test inequality conditions (!=) 
     read humidity       ==>  Alert           when  ${HUMIDITY} != 50 and ${SENSOR_ID} != temp01
@@ -207,9 +205,6 @@ Activate Backup
 
 Full Reset
     Log    Performing full system reset
-
-Restart System
-    Log    System restart initiated
 
 Maintenance Mode
     Log    Entering maintenance mode
