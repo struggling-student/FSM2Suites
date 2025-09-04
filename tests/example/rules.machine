@@ -13,6 +13,10 @@ ${ALERT_LEVEL}    any of    0    1    2    3    4    5
 ${RESPONSE_TIME}  any of    100    200    500    1000    2000
 ${SYSTEM_LOAD}    any of    low    medium    high    critical
 
+Start
+  [Actions]
+    initialize system   ==>  Initialization
+
 Normal
   [Actions]
     continue monitoring  ==>  Monitoring
@@ -41,10 +45,6 @@ Shutdown
   [Actions]
     restart system      ==>  Start           when  ${STATUS} == normal
     maintenance mode    ==>  Monitoring      when  ${MODE} == maintenance
-
-Start
-  [Actions]
-    initialize system   ==>  Initialization
 
 Initialization
   [Actions]
