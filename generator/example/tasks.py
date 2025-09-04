@@ -135,6 +135,96 @@ def generate(ctx):
         print("❌ No files were generated successfully")
 
 
+def generate_all_pairs_with_end_state(strategy_class, output_filename, end_state=None):
+    """Generate a Robot Framework test file for All-Pairs strategy with optional end state."""
+    try:
+        # Load the machine
+        machine = load_example_machine()
+        
+        # Collect all actions for coverage tracking
+        all_actions = set()
+        for state in machine.states:
+            for action in state._actions:
+                action._parent_state = state
+                all_actions.add(action)
+        
+        # Generate tests
+        generator = Generator()
+        output = StringIO()
+        generator.generate(
+            machine, 
+            max_tests=10, 
+            max_actions=5, 
+            to_state=end_state,  # Set the target end state
+            output=output, 
+            strategy=strategy_class,
+            all_actions=all_actions
+        )
+        
+        result = output.getvalue()
+        
+        # Create Robot Framework file with proper header
+        full_content = f"""{result}"""
+        
+        # Ensure out directory exists
+        out_dir = current_dir / "out"
+        out_dir.mkdir(exist_ok=True)
+        
+        # Save to file in out directory
+        output_file = out_dir / output_filename
+        with open(output_file, 'w') as f:
+            f.write(full_content)
+        
+        print(f"✅ Generated: out/{output_filename}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error generating {output_filename}: {e}")
+        return False
+
+
+@task
+def all_pairs_to_start(ctx):
+    """
+    Generate Robot Framework test file using All-Pairs strategy with end state set to "Start".
+    
+    Creates file:
+    - out/example_all_pairs_to_start.robot (All-Pairs Strategy ending in Start state)
+    
+    This ensures all generated test cases end in the "Start" state, which can be useful
+    for testing scenarios where you want to return to the initial state.
+    
+    Example:
+        inv all-pairs-to-start
+    """
+    print("🚀 Generating All-Pairs strategy test file with end state 'Start'")
+    print("=" * 70)
+    
+    try:
+        success = generate_all_pairs_with_end_state(
+            AllPairsRandomStrategy, 
+            "example_all_pairs_to_start.robot", 
+            end_state="Start"
+        )
+        
+        if success:
+            print("\n✅ Generation Complete!")
+            print("\n📋 Generated file:")
+            print("   • out/example_all_pairs_to_start.robot")
+            print("\n🚀 Run the test file:")
+            print("   robot out/example_all_pairs_to_start.robot")
+        else:
+            print("\n❌ Generation failed!")
+            
+    except AssertionError as e:
+        if "AllPairs does not work correctly with rules" in str(e):
+            print("⚠️  All-Pairs strategy skipped: Cannot be used with machines that have rules")
+        else:
+            print(f"❌ Error with All-Pairs strategy: {e}")
+    except Exception as e:
+        print(f"❌ Error with All-Pairs strategy: {e}")
+
+
 @task
 def clean(ctx):
     """
@@ -160,7 +250,7 @@ def clean(ctx):
     
     removed_count = 0
     
-    # Remove generated robot files from out directory
+    # Remove generated robot files from out directory (including the new all-pairs-to-start file)
     for robot_file in robot_files:
         try:
             robot_file.unlink()
@@ -200,21 +290,25 @@ def help(ctx):
     print("=" * 50)
     print()
     print("Available tasks:")
-    print("  inv generate  - Generate Robot Framework test files for all strategies")
-    print("  inv clean     - Clean up generated test files")
-    print("  inv help      - Show this help message")
+    print("  inv generate           - Generate Robot Framework test files for all strategies")
+    print("  inv all-pairs-to-start - Generate All-Pairs strategy test file ending in 'Start' state")
+    print("  inv clean              - Clean up generated test files")
+    print("  inv help               - Show this help message")
     print()
     print("Generated files:")
-    print("  • out/example_depth_first.robot  - Depth-First Search Strategy")
-    print("  • out/example_random.robot       - Random Strategy")
-    print("  • out/example_all_pairs.robot    - All-Pairs Strategy")
+    print("  • out/example_depth_first.robot        - Depth-First Search Strategy")
+    print("  • out/example_random.robot             - Random Strategy")
+    print("  • out/example_all_pairs.robot          - All-Pairs Strategy")
+    print("  • out/example_all_pairs_to_start.robot - All-Pairs Strategy (ending in Start)")
     print()
     print("Usage:")
-    print("  inv generate              # Generate all test files")
-    print("  inv clean                 # Remove generated files")
+    print("  inv generate               # Generate all test files")
+    print("  inv all-pairs-to-start     # Generate All-Pairs tests ending in Start state")
+    print("  inv clean                  # Remove generated files")
     print()
     print("Running tests:")
-    print("  robot out/example_depth_first.robot      # Run depth-first tests")
-    print("  robot out/example_random.robot           # Run random tests")
-    print("  robot out/example_all_pairs.robot        # Run all-pairs tests")
-    print("  robot out/example_*.robot                # Run all generated tests")
+    print("  robot out/example_depth_first.robot        # Run depth-first tests")
+    print("  robot out/example_random.robot             # Run random tests")
+    print("  robot out/example_all_pairs.robot          # Run all-pairs tests")
+    print("  robot out/example_all_pairs_to_start.robot # Run all-pairs tests (to Start)")
+    print("  robot out/example_*.robot                  # Run all generated tests")
