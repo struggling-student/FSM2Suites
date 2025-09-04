@@ -13,6 +13,41 @@ ${ALERT_LEVEL}    any of    0    1    2    3    4    5
 ${RESPONSE_TIME}  any of    100    200    500    1000    2000
 ${SYSTEM_LOAD}    any of    low    medium    high    critical
 
+# 1. IMPLICATION RULES (==>)
+${TEMPERATURE} >= 35  ==>  ${STATUS} != normal
+${SYSTEM_LOAD} == critical  ==>  ${RESPONSE_TIME} >= 1000
+
+# 2. EQUIVALENCE RULES (<==>)
+${STATUS} == normal  <==>  ${ALERT_LEVEL} <= 2
+${MODE} == maintenance  <==>  ${ALERT_LEVEL} <= 1
+
+# 3. EQUALITY (==) and INEQUALITY (!=)
+${MODE} == test  ==>  ${STATUS} != emergency
+${SENSOR_ID} != press01  ==>  ${PRESSURE} >= 1000
+
+# 4. GREATER/LESS THAN OR EQUAL (>=, <=)
+${HUMIDITY} >= 90  ==>  ${ALERT_LEVEL} >= 3
+${TEMPERATURE} <= 20  ==>  ${STATUS} == normal
+
+# 5. REGEX MATCHING (~) and NEGATED REGEX (!~)
+${SENSOR_ID} ~ temp.*  ==>  ${TEMPERATURE} >= 20
+${SENSOR_ID} !~ press.*  ==>  ${PRESSURE} <= 1020
+
+# 6. COMPLEX AND CONDITIONS
+(${TEMPERATURE} >= 40  and  ${HUMIDITY} >= 90)  ==>  ${STATUS} == critical
+(${MODE} == maintenance  and  ${STATUS} == normal)  ==>  ${ALERT_LEVEL} <= 1
+
+# 7. COMPLEX OR CONDITIONS  
+(${TEMPERATURE} >= 40  or  ${HUMIDITY} >= 90  or  ${PRESSURE} <= 990)  ==>  ${ALERT_LEVEL} >= 4
+(${MODE} == manual  or  ${MODE} == test)  ==>  ${RESPONSE_TIME} <= 1000
+
+# 8. MIXED AND/OR WITH NESTED CONDITIONS
+((${TEMPERATURE} >= 35  and  ${HUMIDITY} >= 80)  or  (${PRESSURE} <= 990  and  ${SYSTEM_LOAD} == critical))  ==>  ${RESPONSE_TIME} >= 1000
+
+# 9. COMPLEX CONDITIONS ON RIGHT SIDE
+${MODE} == test  ==>  (${ALERT_LEVEL} <= 3  and  ${STATUS} != emergency)
+${STATUS} == critical  ==>  (${ALERT_LEVEL} >= 4  or  ${RESPONSE_TIME} >= 1000)
+
 Start
   [Actions]
     initialize system   ==>  Initialization
