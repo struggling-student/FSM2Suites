@@ -1,8 +1,3 @@
-"""
-Invoke tasks for generating shopping application test files
-using the state.machine file.
-"""
-
 from invoke import task
 import os
 import sys
@@ -80,16 +75,13 @@ try:
     RandomStrategy = generation_module.RandomStrategy
     AllPairsRandomStrategy = generation_module.AllPairsRandomStrategy
     
-except Exception as e:
-    print(f"Error importing modules: {e}")
-    print("Make sure you're running from the correct directory")
+except Exception:
     import traceback
     traceback.print_exc()
     sys.exit(1)
 
 
 def load_shopping_machine():
-    """Load the shopping machine."""
     machine_file = current_dir / "state.machine"
     with open(machine_file, 'r') as f:
         content = f.read()
@@ -97,19 +89,15 @@ def load_shopping_machine():
 
 
 def generate_robot_file(strategy_class, output_filename):
-    """Generate a Robot Framework test file for the given strategy."""
     try:
-        # Load the machine
         machine = load_shopping_machine()
         
-        # Collect all actions for coverage tracking
         all_actions = set()
         for state in machine.states:
             for action in state._actions:
                 action._parent_state = state
                 all_actions.add(action)
         
-        # Generate tests
         generator = Generator()
         output = StringIO()
         generator.generate(
@@ -123,40 +111,22 @@ def generate_robot_file(strategy_class, output_filename):
         
         result = output.getvalue()
         
-        # Create Robot Framework file with proper header
         full_content = f"""{result}"""
         
-        # Save to file in the out directory
         output_dir = current_dir / "out"
         output_dir.mkdir(exist_ok=True)
         output_file = output_dir / output_filename
         with open(output_file, 'w') as f:
             f.write(full_content)
         
-        print(f"✅ Generated: out/{output_filename}")
         return True
         
-    except Exception as e:
-        print(f"❌ Error generating {output_filename}: {e}")
+    except Exception:
         return False
 
 
 @task
 def generate(ctx):
-    """
-    Generate Robot Framework test files for all three strategies.
-    
-    Creates:
-    - shopping_depth_first.robot (Depth-First Search Strategy)
-    - shopping_random.robot (Random Strategy)  
-    - shopping_all_pairs.robot (All-Pairs Strategy)
-    
-    Example:
-        inv generate
-    """
-    print("🚀 Generating Robot Framework test files for all shopping strategies")
-    print("=" * 70)
-    
     strategies = [
         (DepthFirstSearchStrategy, "shopping_depth_first.robot", "Depth-First Search"),
         (RandomStrategy, "shopping_random.robot", "Random"),
@@ -166,70 +136,31 @@ def generate(ctx):
     generated_files = []
     
     for strategy_class, filename, name in strategies:
-        print(f"\n🔄 Generating {name} strategy...")
         try:
             if generate_robot_file(strategy_class, filename):
                 generated_files.append(filename)
-        except AssertionError as e:
-            if "AllPairs does not work correctly with rules" in str(e):
-                print(f"⚠️  {name} strategy skipped: Cannot be used with machines that have rules")
-            else:
-                print(f"❌ Error with {name} strategy: {e}")
-        except Exception as e:
-            print(f"❌ Error with {name} strategy: {e}")
-    
-    print("\n" + "=" * 70)
-    print("✅ Generation Complete!")
-    
-    if generated_files:
-        print("\n📋 Generated files:")
-        for filename in generated_files:
-            print(f"   • out/{filename}")
-        print("\n🚀 Run individual files:")
-        for filename in generated_files:
-            print(f"   robot out/{filename}")
-        print("\n🎯 Run all files:")
-        print(f"   robot out/{' '.join(generated_files)}")
-    else:
-        print("❌ No files were generated successfully")
+        except AssertionError:
+            pass
+        except Exception:
+            pass
 
 
 @task
 def clean(ctx):
-    """
-    Clean up generated Robot Framework test files.
-    
-    Removes:
-    - shopping_*.robot files
-    - Python cache files
-    
-    Example:
-        inv clean
-    """
-    print("🧹 Cleaning up generated files...")
-    
-    # Remove generated .robot files from out directory
     out_dir = current_dir / "out"
     robot_files = list(out_dir.glob("shopping_*.robot")) if out_dir.exists() else []
     pyc_files = glob.glob("**/*.pyc", recursive=True)
     pycache_dirs = glob.glob("**/__pycache__", recursive=True)
     
-    removed_count = 0
-    
-    # Remove generated robot files
     for robot_file in robot_files:
         try:
             robot_file.unlink()
-            removed_count += 1
-            print(f"   🗑️  Removed: out/{robot_file.name}")
         except OSError:
             pass
     
-    # Remove cache files
     for pyc_file in pyc_files:
         try:
             os.remove(pyc_file)
-            removed_count += 1
         except OSError:
             pass
     
@@ -237,40 +168,5 @@ def clean(ctx):
         try:
             import shutil
             shutil.rmtree(pycache_dir)
-            removed_count += 1
         except OSError:
             pass
-    
-    if removed_count > 0:
-        print(f"✅ Removed {removed_count} files/directories")
-    else:
-        print("✅ No files to clean")
-
-
-@task(default=True)
-def help(ctx):
-    """
-    Show available tasks and usage information.
-    """
-    print("🛒 Shopping Application - Test Generation Tasks")
-    print("=" * 50)
-    print()
-    print("Available tasks:")
-    print("  inv generate  - Generate Robot Framework test files for all strategies")
-    print("  inv clean     - Clean up generated test files")
-    print("  inv help      - Show this help message")
-    print()
-    print("Generated files:")
-    print("  • out/shopping_depth_first.robot  - Depth-First Search Strategy")
-    print("  • out/shopping_random.robot       - Random Strategy")
-    print("  • out/shopping_all_pairs.robot    - All-Pairs Strategy")
-    print()
-    print("Usage:")
-    print("  inv generate              # Generate all test files")
-    print("  inv clean                 # Remove generated files")
-    print()
-    print("Running tests:")
-    print("  robot out/shopping_depth_first.robot      # Run depth-first tests")
-    print("  robot out/shopping_random.robot           # Run random tests")
-    print("  robot out/shopping_all_pairs.robot        # Run all-pairs tests")
-    print("  robot out/shopping_*.robot                # Run all generated tests")
