@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<xmi:XMI xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore">
+  <ecore:EPackage name="UseCase" nsURI="http://www.example.org/UseCase" nsPrefix="UseCase">
+    <eClassifiers xsi:type="ecore:EClass" name="Classifier">
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="Name" ordered="false"
+          unique="false" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eStructuralFeatures xsi:type="ecore:EReference" name="ownedUseCase" ordered="false"
+          unique="true" lowerBound="0" upperBound="-1" eType="#/0/UseCase" containment="true"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="UseCase">
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="Name" ordered="false"
+          unique="false" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="Include">
+      <eStructuralFeatures xsi:type="ecore:EReference" name="includingCase" ordered="false"
+          unique="false" lowerBound="1" eType="#/0/UseCase"/>
+      <eStructuralFeatures xsi:type="ecore:EReference" name="addition" ordered="false"
+          unique="false" lowerBound="1" eType="#/0/UseCase"/>
+    </eClassifiers>
+  </ecore:EPackage>
+</xmi:XMI>

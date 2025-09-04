@@ -1,0 +1,23 @@
+transformation FamilyToPerson(in f: Families, out p: Persons) {
+  top relation MemberToMale {
+    domain src m : Member { firstName = name };
+    domain tgt p : Male { fullName = fullname };
+    where {
+      fullname = name + ' ' + m.familyName;
+      not m.isFemale();
+    }
+  }
+
+	
+	top relation MemberToFemale {
+        domain src m: Member {
+            firstName = n
+        };
+        domain tgt female: Female {
+            fullName = n + ' ' + m.familyName
+        };
+        where {
+            m.isFemale();
+        }
+    }
+}

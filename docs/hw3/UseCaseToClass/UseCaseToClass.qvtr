@@ -1,0 +1,47 @@
+transformation UCtoClass(u: UseCase, c: Class) {
+
+    top relation ClassifierToClass {
+        checkonly domain src a : Classifier {
+            Name = classifierName;
+        }
+        enforce domain tgt c : Class {
+            Name = classifierName;
+        }
+        where { }
+    }
+
+    top relation UseCaseToOperation {
+        checkonly domain src uc : UseCase { 
+            Name = ucName;
+        }
+        checkonly domain src classifier : Classifier {
+            ownedUseCase = uc;
+            Name = classifierName;
+        }
+        enforce domain tgt op : Operation {
+            Name = ucName;
+        }
+        enforce domain tgt c : Class {
+            Name = classifierName;
+            ownedOperation = op;
+        }
+        where {
+            ClassifierToClass(classifier, c);
+        }
+    }
+
+    top relation IncludeToDependency {
+        checkonly domain src i : Include {
+            includingCase = includingUC;
+            addition = additionUC;
+        }
+        enforce domain tgt d : Dependency {
+            client = clientOp;
+            supplier = supplierOp;
+        }
+        where {
+            UseCaseToOperation(includingUC, clientClassifier, clientOp, clientClass);
+            UseCaseToOperation(additionUC, supplierClassifier, supplierOp, supplierClass);
+        }
+    }
+}

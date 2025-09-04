@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<xmi:XMI xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:Class="http://www.example.org/Class">
+  <Class:Class xmi:id="Class1" Name="User">
+    <ownedOperation xmi:id="Operation1" Name="Login"/>
+    <ownedOperation xmi:id="Operation2" Name="Logout"/>
+  </Class:Class>
+  <Class:Dependency xmi:id="Dependency1" client="//@Class.0/@ownedOperation.0" supplier="//@Class.0/@ownedOperation.1"/>
+</xmi:XMI>

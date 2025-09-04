@@ -1,0 +1,8 @@
+context Classifier
+inv: self.Name <> ''
+
+context UseCase
+inv: self.Name <> ''
+
+context Include
+inv: self.includingCase <> self.addition
