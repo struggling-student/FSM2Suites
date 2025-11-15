@@ -60,11 +60,21 @@ try:
     
     exec(compile(generator_code, str(generator_dir / "generation" / "generator.py"), 'exec'), vars(generation_module))
     
+        # Load allpairs strategy
+    with open(generator_dir / "generation" / "allpairsstrategy.py", 'r') as f:
+        allpairs_code = f.read()
+        # Replace relative imports
+        allpairs_code = allpairs_code.replace('from .strategies import', 'from generation import')
+    
+    exec(compile(allpairs_code, str(generator_dir / "generation" / "allpairsstrategy.py"), 'exec'), vars(generation_module))
+    
+
     # Extract the classes and functions we need
     parse = parsing_module.parse
     Generator = generation_module.Generator
     RandomStrategy = generation_module.RandomStrategy
-    
+    AllPairsRandomStrategy = generation_module.AllPairsRandomStrategy
+
 except Exception:
     sys.exit(1)
 
@@ -97,6 +107,7 @@ def generate_robot_file(strategy_class, output_filename, max_tests, max_actions)
             max_actions=max_actions, 
             output=output, 
             strategy=strategy_class,
+            #strategy=AllPairsRandomStrategy,
             all_actions=all_actions
         )
         
@@ -115,8 +126,9 @@ def generate_robot_file(strategy_class, output_filename, max_tests, max_actions)
             f.write(full_content)
         
         return True
-        
-    except Exception:
+
+    except Exception as e:
+        print("Error during test generation:", e)
         return False
 
 
